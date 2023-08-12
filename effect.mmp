@@ -1,0 +1,22 @@
+OPTION GCCE -Wno-unused
+
+MACRO ASM
+MACRO HAVE_CONFIG_H
+
+TARGET libgn_effect.lib
+TARGETTYPE lib
+
+
+USERINCLUDE gngeo-0.8\src\blitter
+SYSTEMINCLUDE gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL
+
+SOURCEPATH gngeo-0.8\src\effect
+
+SOURCE scale2x.c
+SOURCE scanline.c
+SOURCE hq2x.c
+SOURCE interp.c
+SOURCE lq2x.c
+SOURCE hq3x.c
+SOURCE lq3x.c
+SOURCE hqx_common.c

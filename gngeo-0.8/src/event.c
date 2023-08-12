@@ -282,21 +282,23 @@ int handle_event(void)
 	{
 	   memory.intern_start &= 0xFE;
 	}
+	
+
 	if (kbstate[SDLK_2])
 	{
-	    memory.intern_p1 &= 0xEF;
+	    memory.intern_p1 &= 0xEF; // A
 	}
 	if (kbstate[SDLK_4])
 	{
-	    memory.intern_p1 &= 0xBF;
+	    memory.intern_p1 &= 0xBF; // C
 	}
 	if (kbstate[SDLK_6])
 	{
-	    memory.intern_p1 &= 0x7F;
+	    memory.intern_p1 &= 0x7F; // D
 	}
 	if (kbstate[SDLK_8])
 	{
-        memory.intern_p1 &= 0xDF;
+        memory.intern_p1 &= 0xDF; // B
 	}
     /*
 	if (kbstate[SDLK_ESCAPE])

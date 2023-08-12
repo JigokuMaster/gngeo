@@ -1,0 +1,19 @@
+OPTION GCCE -Wno-unused
+
+MACRO ASM
+MACRO HAVE_CONFIG_H
+
+TARGET libgn_ym2610.lib
+TARGETTYPE lib
+
+
+USERINCLUDE gngeo-0.8\src\ym2610
+SYSTEMINCLUDE gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL
+
+SOURCEPATH gngeo-0.8\src\ym2610
+SOURCE 2610intf.c ym2610.c
+
+
+
+
+

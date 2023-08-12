@@ -564,7 +564,7 @@ void gn_init_pbar(char *name, int size)
 void gn_update_pbar(int pos)
 {
     char pb_msg[255];
-    sprintf(pb_msg, "Please Wait ... %d%%", (pos*100) / pbar.size);
+    sprintf(pb_msg, "Please Wait ... %d / %d", pos ,  pbar.size);
     draw_back();
 	draw_string(menu_buf, sfont, MENU_TITLE_X + 50, MENU_TITLE_Y + 100, pb_msg);
 	SDL_BlitSurface(menu_buf, NULL, buffer, NULL);

@@ -1,0 +1,19 @@
+OPTION GCCE -Wno-unused
+
+MACRO ASM
+MACRO HAVE_CONFIG_H
+
+TARGET libgn_mamez80.lib
+TARGETTYPE lib
+
+
+USERINCLUDE gngeo-0.8\src\mamez80
+SYSTEMINCLUDE gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL
+
+SOURCEPATH gngeo-0.8\src\mamez80
+SOURCE z80.c
+
+
+
+
+
