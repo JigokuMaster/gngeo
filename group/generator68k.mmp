@@ -1,15 +1,16 @@
 OPTION GCCE -Wno-unused
 
+MACRO OPENC
 MACRO HAVE_CONFIG_H
 
 TARGET libgn_generator68k.lib
 TARGETTYPE lib
 
 
-USERINCLUDE gngeo-0.8\src\generator68k
-SYSTEMINCLUDE gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL
+USERINCLUDE ..\src\gngeo-0.8\src\generator68k
+SYSTEMINCLUDE ..\src\gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL
 
-SOURCEPATH gngeo-0.8\src\generator68k
+SOURCEPATH ..\src\gngeo-0.8\src\generator68k
 
 SOURCE cpu68k-0.c 
 SOURCE cpu68k-1.c
@@ -31,10 +32,3 @@ SOURCE cpu68k.c
 SOURCE reg68k.c
 SOURCE diss68k.c
 SOURCE tab68k.c
-
-
-
-
-
-
-

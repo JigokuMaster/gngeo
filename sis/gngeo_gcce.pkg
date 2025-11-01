@@ -30,15 +30,17 @@
 ;You should change the source paths to match that of your environment
 ;<source> <destination>
 
-"\root\symbian-sdks\s60_31\epoc32\release\gcce\urel\gngeo.exe"-"!:\sys\bin\gngeo.exe"
+"\epoc32\release\gcce\urel\gngeo.exe"-"!:\sys\bin\gngeo.exe"
 
-"\root\symbian-sdks\s60_31\epoc32\data\z\private\10003a3f\apps\gngeo_reg.rsc"	-"!:\private\10003a3f\import\apps\gngeo_reg.rsc"
+"\epoc32\data\z\private\10003a3f\apps\gngeo_reg.rsc"	-"!:\private\10003a3f\import\apps\gngeo_reg.rsc"
 
-"\root\symbian-sdks\s60_31\epoc32\data\z\resource\apps\gngeo.rsc" -"!:\resource\apps\gngeo.rsc"
+"\epoc32\data\z\resource\apps\gngeo.rsc" -"!:\resource\apps\gngeo.rsc"
 
-"gngeo_aif.mif"-"!:\resource\apps\gngeo_aif.mif"
+"..\gfx\gngeo_aif.mif"-"!:\resource\apps\gngeo_aif.mif"
 
-"gngeo-0.8\gngeo.dat\gngeo_data.zip" - "!:\private\be99619c\gngeo_data.zip"
+"..\src\gngeo-0.8\gngeo.dat\gngeo_data.zip" - "!:\private\be99619c\gngeo_data.zip"
 
+"..\src\gngeo-0.8\gngeorc.symbian" - "!:\gngeo\gngeorc"
 
+"..\data\neogeo.zip" - "!:\gngeo\roms\neogeo.zip"
 

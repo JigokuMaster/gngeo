@@ -1,0 +1,71 @@
+# GNGEO resource file for Symbian
+
+# Where your rom (and bios) are?
+rompath ./roms
+
+fullscreen true
+
+# soft
+# opengl
+# yuv
+blitter soft
+
+  
+# scanline
+# scanline50
+# scale2x
+# scale2x50
+# scale2x75
+# doublex
+# sai
+# supersai
+# eagle
+effect none
+
+# Enable the raster interrupt?
+raster false
+
+
+# Have interpolation?
+interpolation false
+
+# Have sound?
+sound false
+
+# Shown FPS
+showfps false
+
+# autoframeskip control
+autoframeskip true
+sleepidle false
+
+# enable joystick support ?
+joystick false
+
+# enable the 68k inline debuger? (disable the sound)
+debug false
+
+hwsurface false
+
+# Convert all tile at loading time (insted on the fly)
+
+# Use PAL timing? (buggy)
+pal false
+
+# invert joystick order ?
+
+# Sample rate
+samplerate 22050
+
+# country?
+# japan, usa, europe
+country europe
+
+# system type? arcade or home
+system arcade
+
+# Key configuration
+# please see SDL_keysym.h for key definition
+
+p1control MENU=K32,A=K50,COIN=K49,D=K54,B=K56,UP=K273,DOWN=K274,RIGHT=K275,LEFT=K276,START=K53
+

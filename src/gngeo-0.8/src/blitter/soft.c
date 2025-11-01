@@ -133,7 +133,11 @@ blitter_soft_init()
 
 
 #else
-	screen = SDL_SetVideoMode(width, height, 16, sdl_flags);
+	screen = SDL_SetVideoMode(width, height, 32, sdl_flags);
+	if(screen == NULL)
+	{
+	    return SDL_FALSE;
+	}    
 	//SDL_ShowCursor(SDL_DISABLE);
 #endif
 	if (!screen) return SDL_FALSE;

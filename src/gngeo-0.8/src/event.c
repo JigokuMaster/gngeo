@@ -12,7 +12,6 @@
 #include "memory.h"
 
 static int get_mapid(char *butid) {
-#ifndef SYMBIAN
 	printf("Get mapid %s\n",butid);
 	if (!strcmp(butid,"A")) return GN_A;
 	if (!strcmp(butid,"B")) return GN_B;
@@ -38,12 +37,52 @@ static int get_mapid(char *butid) {
 	if (!strcmp(butid,"HOTKEY2")) return GN_HOTKEY2;
 	if (!strcmp(butid,"HOTKEY3")) return GN_HOTKEY3;
 	if (!strcmp(butid,"HOTKEY4")) return GN_HOTKEY4;
-#endif
 	return GN_NONE;
 }
 
+#ifdef SYMBIAN
+// FIX sscanf exp: this is much faster on symbian
+bool create_joymap_from_string(int player,char *jconf)
+{
+	char *v;
+	char butid[32]={0};
+	int rc, code;
+	char type;
+	printf("Jconf=%s\n",jconf);
+	if (jconf==NULL)
+	{    
+	    return false;
+	}
+	if (strlen(jconf)==0)
+	{    
+	    return false;
+	}
+
+	char* tmp = strdup(jconf);
+	v = strtok(tmp,",");
+	//printf("V1=%s\n",v);
+	while(v)
+	{
+	    rc = sscanf(v,"%[^=]=%c%d",butid,&type, &code);
+	    if (rc==3 && type=='K')
+	    {
+		//printf("%s | keycode %d\n",butid, code);
+		if (code<SDLK_LAST)
+		{
+		    jmap->key[code].player=player;
+		    jmap->key[code].map=get_mapid(butid);
+		}
+		//printf("%d\n",get_mapid(butid));
+	    }
+	    v = strtok(NULL, ",");
+	}
+
+	free(tmp);
+	return true;
+}
+
+#else
 bool create_joymap_from_string(int player,char *jconf) {
-#ifndef SYMBIAN
 	char *v;
 	char butid[32]={0,};
 	char jevt;
@@ -51,15 +90,25 @@ bool create_joymap_from_string(int player,char *jconf) {
 	int jid;
 	int rc;
 	char type;
-	//printf("Jconf=%s\n",jconf);
-	if (jconf==NULL) return 0;
+	printf("Jconf=%s\n",jconf);
+	if (jconf==NULL)
+	{    
+	    return false;
+	}
+	if (strlen(jconf)==0)
+	{    
+	    return false;
+	} 
 	v=strdup(jconf);
 	v=strtok(v,",");
-	//printf("V1=%s\n",v);
-	while(v) {
+	printf("V1=%s\n",v);
+	while(v)
+	{
 		rc=sscanf(v,"%[A-Z1-4]=%c%d%c%d",butid,&type,&jid,&jevt,&code);
-		if (rc==3 && type=='K') { /* Keyboard */
-			//printf("%s | keycode %d\n",butid,jid);
+		rc = sscanf(v,"%[^=]=%c%d",butid,&type, &code);
+		if (rc==3 && type=='K')
+		{ /* Keyboard */
+			printf("%s | keycode %d\n",butid,jid);
 			code=jid;
 			if (code<SDLK_LAST) {
 				jmap->key[code].player=player;
@@ -67,6 +116,8 @@ bool create_joymap_from_string(int player,char *jconf) {
 			}
 			//printf("%d\n",get_mapid(butid));
 		}
+		
+#if !SDL_JOYSTICK_DISABLED		
 		if (rc==5 && type=='J') {
 			printf("%d, %s | joy no %d | evt %c | %d\n",
 			rc,butid,jid,jevt,code);
@@ -101,25 +152,29 @@ bool create_joymap_from_string(int player,char *jconf) {
 				}
 			}
 		}
-
+#endif //SDL_JOYSTICK_DISABLED
 		v=strtok(NULL,",");
 	}
-#endif 
+
 	return true;
 }
-
+#endif // SYMBIAN
 
 bool init_event(void) {
-#ifndef SYMBIAN
+
 	int i;
 //	printf("sizeof joymap=%d nb_joy=%d\n",sizeof(JOYMAP),conf.nb_joy);
 	jmap=calloc(sizeof(JOYMAP),1);
 
 #ifdef WII
 	conf.nb_joy = 4;
-#else	
+#else
+#if !SDL_JOYSTICK_DISABLED	
 	conf.nb_joy = SDL_NumJoysticks();
+#endif //SDL_JOYSTICK_DISABLED		
 #endif
+
+#if !SDL_JOYSTICK_DISABLED	
 	if( conf.nb_joy>0) {
 		if (conf.joy!=NULL) free(conf.joy);
 		conf.joy=calloc(sizeof(SDL_Joystick*),conf.nb_joy);
@@ -143,9 +198,11 @@ bool init_event(void) {
 			jmap->jhat[i]=calloc(SDL_JoystickNumHats(conf.joy[i]),sizeof(struct BUT_MAP));
 		}
 	}
+#endif //SDL_JOYSTICK_DISABLED	
 	create_joymap_from_string(1,CF_STR(cf_get_item_by_name("p1control")));
+#ifndef SYMBIAN	
+	// not used on symbian
 	create_joymap_from_string(2,CF_STR(cf_get_item_by_name("p2control")));
-
 #endif // SYMBIAN
 	return true;
 }
@@ -188,6 +245,46 @@ int handle_pdep_event(SDL_Event *event) {
 			break;
 	}
 }
+
+#elif SYMBIAN
+extern void symbian_audio_volume_set(int v, int update);
+extern int symbian_audio_volume_get();
+
+int handle_pdep_event(SDL_Event *event)
+{
+	char volbuf[21];
+	switch (event->type)
+	{
+	    case SDL_KEYDOWN:
+		switch (event->key.keysym.sym)
+		{
+		    case SDLK_ESCAPE:
+			return 1;
+			break;
+		    case SDLK_HASH:
+			if(conf.sound){
+			    symbian_audio_volume_set(5, 1);
+			    sprintf(volbuf, "+%d%", symbian_audio_volume_get());
+			    draw_message(volbuf);
+			}
+			break;
+		    case SDLK_ASTERISK: 
+			if(conf.sound){
+			    symbian_audio_volume_set(-5, 1);
+			    sprintf(volbuf, "-%d%", symbian_audio_volume_get());
+			    draw_message(volbuf);
+			}
+		    default:
+			break;
+		}
+		break;
+	    default:
+		break;
+	}
+	return 0;
+}
+
+
 #else /* Default */
 int handle_pdep_event(SDL_Event *event) {
 	switch (event->type) {
@@ -213,35 +310,10 @@ int handle_pdep_event(SDL_Event *event) {
 #define EVGAME 1
 #define EVMENU 2
 
-#ifdef SYMBIAN
-extern int neo_emu_done;
-extern void symbian_audio_volume(int v, int update);
+#ifdef SYMBIANX
 
-#if 0
-void toggle_sound()
-{
-
-    if (conf.sound)
-    {
-	    /* disable sound */
-	    conf.sound = 0;
-	    conf.sample_rate = 0;
-	    close_sdl_audio();
-    }
-
-    else if (conf.sound==0)
-    {
-	    /* enable sound */
-	    close_sdl_audio();
-	    conf.sound = 1;
-	    conf.sample_rate = 22050;
-	    //init_sound();
-        init_sdl_audio();
-		YM2610ChangeSamplerate(conf.sample_rate);
-	}
-}
-
-#endif
+extern void symbian_audio_volume_set(int v, int update);
+extern int symbian_audio_volume_get();
 
 int handle_event(void)
 {
@@ -300,12 +372,6 @@ int handle_event(void)
 	{
         memory.intern_p1 &= 0xDF; // B
 	}
-    /*
-	if (kbstate[SDLK_ESCAPE])
-	{
-        neo_emu_done = 1;
-	}
-    */
 	if (kbstate[SDLK_SPACE]) 
 	{
 
@@ -319,11 +385,6 @@ int handle_event(void)
 	{
 	    symbian_audio_volume(-10, 1);
 	}
-	/*
-	if (kbstate[SDLK_0]) 
-	{
-	    toggle_sound();
-	}*/
     return 0;
 
 }
@@ -403,7 +464,7 @@ int handle_event(void) {
 				joy_state[1][jmap->key[event.key.keysym.sym].map]=0;
 				break;
 			case 3:
-				joy_state[1][jmap->key[event.key.keysym.sym].map]=0;
+			//	joy_state[1][jmap->key[event.key.keysym.sym].map]=0;
 				joy_state[0][jmap->key[event.key.keysym.sym].map]=0;
 				break;
 			default:
@@ -411,7 +472,7 @@ int handle_event(void) {
 			}
 		break;
 	    case SDL_KEYDOWN:
-				//printf("%d\n", event.key.keysym.sym);
+		    printf("SDL_KEY %d, PKEY %d\n", event.key.keysym.sym, jmap->key[event.key.keysym.sym].player);
 		    switch (jmap->key[event.key.keysym.sym].player) {
 			case 1:
 				joy_state[0][jmap->key[event.key.keysym.sym].map]=1;

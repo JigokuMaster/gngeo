@@ -197,16 +197,33 @@ SDL_bool screen_init() {
 		visible_area.y = 16;
 		visible_area.w = 320;
 		visible_area.h = 224;
-		#ifdef SYMBIAN
-		SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
-		if(modes[0]->w < 320)
-		{
-		    visible_area.x = 24;
-		    visible_area.y = 16;
-		    visible_area.w = 304;
-		    visible_area.h = 224;
+#ifdef SYMBIAN	
+		bool hw_surface = CF_BOOL(cf_get_item_by_name("hwsurface"));
+		SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN | (hw_surface?SDL_HWSURFACE:SDL_SWSURFACE));
+		int sw = modes[0]->w;
+		int sh = modes[0]->h;
+		printf("screen resolution: %dx%d\n", sw, sh);  
+		if(sw >= 320)
+		{	
+		    //visible_area.x = 24;
+		    //visible_area.y = 16;
+		    // center
+		    visible_area.x = 0; 
+		    visible_area.y = 0;
+		    visible_area.w = sw;
+		    visible_area.h = sh;
 		}
-		#endif
+		else if (sw == 240 && sh == 320)
+		{
+		    visible_area.x = 0; 
+		    visible_area.y = 0;
+		    visible_area.w = sh;
+		    visible_area.h = sw;
+		}    
+
+
+
+#endif
 
 
 	/* Initialization of some variables */

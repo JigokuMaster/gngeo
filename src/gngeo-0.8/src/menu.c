@@ -16,6 +16,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. 
  */
 
+#define SYMBIAN 1
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -676,12 +678,13 @@ void gn_popup_error(char *name, char *fmt, ...) {
 	while (wait_event() == 0);
 }
 
+// FIX: Yes/No dialog actions
 static int yes_action(GN_MENU_ITEM *self, void *param) {
-	return 1;
+	return 2;
 }
 
 static int no_action(GN_MENU_ITEM *self, void *param) {
-	return 0;
+	return 1;
 }
 
 /* TODO: use a mini yes/no menu instead of B/X */
@@ -713,6 +716,7 @@ int gn_popup_question(char *name, char *fmt, ...) {
 			printf("return %d\n",a);
 			return a;
 		}
+
 	}
 	return 0;
 }
@@ -1025,7 +1029,7 @@ int menu_event_handling(struct GN_MENU *self) {
 			//l = list_get_item_by_index(self->item, self->current);
 			mi = gn_menu_get_item_by_index(self, self->current);
 			if (mi && mi->action) {
-				reset_event();
+				reset_event();   
 				if ((a = mi->action(mi, NULL))>0)
 /*
 					if (a == MENU_CLOSE) return MENU_STAY;
@@ -1290,6 +1294,227 @@ static int toggle_fullscreen(GN_MENU_ITEM *self, void *param) {
 	return MENU_STAY;
 }
 
+#ifdef SYMBIAN
+
+static GN_MENU *controls_menu[2] = {NULL, NULL};
+
+static char* gngeo_keynames[] = {
+    "NONE",
+    "A",
+    "B",
+    "C",
+    "D",
+    "UP",
+    "DOWN",
+    "LEFT",
+    "RIGHT",
+    "START",
+    "COIN",
+    "MENU",
+    "HOTKEY1",
+    "HOTKEY2",
+    "HOTKEY3",
+    "HOTKEY4",
+    "pNcontrol"
+};
+
+static int change_screenmode(GN_MENU_ITEM *self, void *param)
+{
+
+	return 0;
+}
+
+static int apply_control_changes(char* pcontrol)
+{
+    char* controls = CF_STR(cf_get_item_by_name(pcontrol));
+    char new_controls[255];
+    memset(new_controls, 0, 255);
+    printf("current controls %s len: %ld\n", controls, strlen(controls));
+    int menu_idx = (strcmp(pcontrol, "p1control")==0) ? 0:1;
+    GN_MENU* menu = controls_menu[menu_idx]; 
+    LIST* item = menu->item;  
+    int i = 0;
+    int ret = 1;
+    while((item != NULL) && (i < menu->nb_elem))
+    {
+	 
+	GN_MENU_ITEM *mi = (GN_MENU_ITEM *)item->data;
+	if(mi == NULL)
+	{
+	    return 0;
+	}
+
+	char* item_str = strdup(mi->name);
+	if(item_str == NULL)
+	{
+	    return 0;
+	}
+
+	char* sep1 = strchr(item_str, ' ');
+	if(sep1 == NULL)
+	{
+	    free(item_str);
+	    return 0;
+	}
+
+	*sep1 = '=';
+	char* sep2 = strchr(item_str, '[');
+	if(sep2 == NULL)
+	{
+	    free(item_str);
+	    return 0;
+	}
+	sep2--; // space
+	*sep2 = '\0';
+
+	strcat(new_controls, item_str);
+	if(i < (menu->nb_elem)-1)
+	{    
+	    strcat(new_controls, ",");
+	}  	
+	item = item->next;
+	i++;
+	free(item_str);
+    }
+
+    memset(controls, 0, strlen(controls));
+    strcpy(controls, new_controls);
+    controls = CF_STR(cf_get_item_by_name(pcontrol));
+    printf("new controls %s len: %ld\n", controls, strlen(controls));
+    create_joymap_from_string(1,CF_STR(cf_get_item_by_name(pcontrol)));
+    return 1;
+}
+
+static void save_control_changes(char* pcontrol)
+{
+
+    cf_item_has_been_changed(cf_get_item_by_name(pcontrol));
+    cf_save_file(NULL, 0);
+}
+
+static int setup_ctrlkey_action(GN_MENU_ITEM *self, void *param)
+{
+    SDL_Event event;
+    int controls_changed = 0;
+    char* keyname = (char*)self->arg;
+    char* pcontrol = gngeo_keynames[16];   
+    char* item_str = strdup(self->name); // save the original item string
+    printf("keyname: %s\n", keyname);
+    printf("pcontrol: %s\n", pcontrol); 
+    int menu_idx = (strcmp(pcontrol, "p1control")==0) ? 0:1;
+    GN_MENU* menu = controls_menu[menu_idx];    
+    menu->title = "press ENTER to save";
+    while (SDL_WaitEvent(&event))
+    {
+	if(event.type == SDL_KEYDOWN)
+	{
+	    int keycode = event.key.keysym.sym;
+	    switch (keycode)
+	    {
+
+		case SDLK_RETURN:
+		    free(item_str);
+		    // save controls 
+		    if(controls_changed){
+			apply_control_changes(pcontrol);
+			return 2;
+		    }		
+		    return MENU_STAY;	
+		case SDLK_ESCAPE:
+		    //reset original item string
+		    sprintf(self->name, "%s", item_str);
+		    free(item_str);
+		    return MENU_STAY;
+		default:
+		    controls_changed = 1;
+		    sprintf(self->name, "%s K%d [%s]", keyname, keycode, SDL_GetKeyName(keycode));
+		    menu->draw(menu);
+		    break;
+	    }
+	}	    
+    }
+
+    free(item_str);
+    return MENU_STAY;
+}
+
+static void create_controls_menu(int p_num)
+{
+    int i = 0;
+    char control[64] = {0};
+    char* menu_title = "press ENTER to edit";
+    char* pcontrol = (p_num==1) ?  "p1control" : "p2control";
+    int menu_idx = p_num-1;
+    if(controls_menu[menu_idx] == NULL)
+    {
+	controls_menu[menu_idx] = create_menu(menu_title, MENU_SMALL, NULL, NULL);
+    }
+
+    GN_MENU* menu = controls_menu[menu_idx];
+    while(i < SDLK_LAST)
+    {
+	int p = jmap->key[i].player;
+	int k = jmap->key[i].map;
+	i++; 
+	if(p != p_num || k == 0)
+	{
+	    continue;
+	}
+   
+	//sprintf(control, "%s %s", keynames[k], SDL_GetKeyName(i-1)); // why i-1 ?
+	sprintf(control, "%s K%d [%s]", gngeo_keynames[k], i-1, SDL_GetKeyName(i-1));
+	menu->item = list_append(menu->item,(void*) gn_menu_create_item(control, MENU_ACTION, setup_ctrlkey_action, (void*)gngeo_keynames[k]));
+	menu->nb_elem++;
+    }
+}
+
+
+
+static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
+{
+
+    int ret = symbian_ui_orientation_setup();
+    gn_popup_info("config changed", "Please restart the emulator.");
+    self->val = ret;//self->val;   
+    return MENU_STAY;
+}
+
+
+static int setup_controls(GN_MENU_ITEM *self, void *param)
+{
+ 	int i = 0;   
+	int controls_changed = 0;
+	int p_num = (strcmp(self->str, "P2")==0) ? 2 :1;
+	char* pcontrol = (p_num==1) ?  "p1control" : "p2control";
+	gngeo_keynames[16] = pcontrol; // set current player controls id
+	printf("pcontrol: %s\n", pcontrol);
+	int menu_idx = p_num - 1;
+	GN_MENU* menu = controls_menu[menu_idx]; 
+	while(1)
+	{
+	    menu->title = "press ENTER to edit";
+	    menu->draw(menu);
+	    switch(menu->event_handling(menu))
+	    {
+		case 1: // SDLK_ESCAPE
+		    if(controls_changed && gn_popup_question("Save Changes", "save to the config file?") == 2)
+		    {
+			save_control_changes(pcontrol);
+		    }
+		    return MENU_STAY;
+		case 2:
+		    printf("controls_changed\n");
+		    controls_changed = 1;    
+		    break;
+	    }
+	}
+	return MENU_STAY;
+}
+
+
+
+#endif
+
 static int toggle_wide(GN_MENU_ITEM *self, void *param) {
 	self->val = 1 - self->val;
 
@@ -1368,7 +1593,7 @@ static int change_effect(GN_MENU_ITEM *self, void *param) {
 	}
 	while (1) {
 		effect_menu->draw(effect_menu); //frame_skip(0);printf("fps: %s\n",fps_str);
-		if ((a = effect_menu->event_handling(effect_menu)) > 0) {
+if ((a = effect_menu->event_handling(effect_menu)) > 0) {
 			self->str = CF_STR(cf_get_item_by_name("effect"));
 			return MENU_STAY;
 		}
@@ -1467,9 +1692,20 @@ static int save_conf_action(GN_MENU_ITEM *self, void *param) {
 #else
 		gpath = get_gngeo_dir();
 #endif
-		drconf = alloca(strlen(gpath) + strlen(name) + strlen(".cf") + 1);
+		size_t len = strlen(gpath) + strlen(name) + strlen(".cf") + 1;
+		
+#ifdef USE_ALLOCA 
+		drconf = alloca(len);
+#else 
+		drconf = (char *)malloc(len);
+		CHECK_ALLOC(drconf);
+		memset(drconf, 0, len); 
+#endif 
 		sprintf(drconf, "%s%s.cf", gpath, name);
 		cf_save_file(drconf, 0);
+#ifndef USE_ALLOCA 
+		free(drconf);
+#endif
 	}
 	return 1;
 }
@@ -1489,14 +1725,19 @@ static void reset_menu_option(void) {
 #ifdef PANDORA
 	RESET_BOOL("16/9","wide");
 #endif
+// FIX: check for null	
 	gitem=gn_menu_get_item_by_name(option_menu,"Effect");
-	gitem->str = CF_STR(cf_get_item_by_name("effect"));
-
+	if(gitem != NULL){
+	    gitem->str = CF_STR(cf_get_item_by_name("effect"));
+	}
 	gitem=gn_menu_get_item_by_name(option_menu,"Sample Rate");
-	if (conf.sound)
+	if (gitem != NULL)
+	{
+	    if (conf.sound)
 		sprintf(gitem->str, "%d", conf.sample_rate);
-	else
+	    else
 		sprintf(gitem->str, "No sound");
+	}    
 }
 
 static int option_action(GN_MENU_ITEM *self, void *param) {
@@ -1511,6 +1752,7 @@ static int option_action(GN_MENU_ITEM *self, void *param) {
 		}
 	}
 }
+
 
 void gn_init_menu(void) {
 	GN_MENU_ITEM *gitem;
@@ -1544,11 +1786,34 @@ void gn_init_menu(void) {
 
 	option_menu = create_menu("Options", MENU_SMALL, NULL, NULL);
 
+#ifdef SYMBIAN
 
+	gitem = gn_menu_create_item("Landscape Mode", MENU_CHECK, toggle_landscapemode, NULL);
+	gitem->val = symbian_ui_orientation_get();
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+	gitem = gn_menu_create_item("Controls", MENU_LIST, setup_controls, NULL);
+	gitem->str = "P1";
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+	create_controls_menu(1); // P1
+	/*
+	gitem = gn_menu_create_item("Controls", MENU_LIST, setup_controls, NULL);
+	gitem->str = "P2";
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+    	create_controls_menu(2); // P2
+	*/ 
+
+#endif	
+
+#ifndef SYMBIAN	
 	gitem = gn_menu_create_item("Fullscreen", MENU_CHECK, toggle_fullscreen, NULL);
 	gitem->val = CF_BOOL(cf_get_item_by_name("fullscreen"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
+#endif
+
 #ifdef PANDORA
 	gitem = gn_menu_create_item("16/9", MENU_CHECK, toggle_wide, NULL);
 	gitem->val = CF_BOOL(cf_get_item_by_name("wide"));
@@ -1575,11 +1840,12 @@ void gn_init_menu(void) {
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 
+#ifndef SYMBIAN	
 	gitem = gn_menu_create_item("Effect", MENU_LIST, change_effect, NULL);
 	gitem->str = CF_STR(cf_get_item_by_name("effect"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
-
+#endif
 	gitem = gn_menu_create_item("Sample Rate", MENU_LIST, change_samplerate, NULL);
 	gitem->str = malloc(32);
 	if (conf.sound)
@@ -1601,7 +1867,7 @@ void gn_init_menu(void) {
 	gitem = gn_menu_create_item("Yes", MENU_ACTION, yes_action, NULL);
 	yesno_menu->item = list_append(yesno_menu->item, (void*) gitem);
 	yesno_menu->nb_elem++;
-	gitem = gn_menu_create_item("no", MENU_ACTION, no_action, NULL);
+	gitem = gn_menu_create_item("No", MENU_ACTION, no_action, NULL);
 	yesno_menu->item = list_append(yesno_menu->item, (void*) gitem);
 	yesno_menu->nb_elem++;
 }
@@ -1642,6 +1908,24 @@ Uint32 run_menu(void) {
 	}
 	//reset_event();
 	if (conf.game == NULL) return 2; /* Exit */
+	
 	return 0;
+}
+
+void free_menu()
+{
+    SDL_FreeSurface(pbar_logo);   
+    SDL_FreeSurface(menu_buf);
+    SDL_FreeSurface(menu_back);
+    free(rbrowser_menu);
+    free(option_menu);
+    free(effect_menu);
+    free(srate_menu);
+    free(yesno_menu);
+    free(main_menu);
+    SDL_FreeSurface(sfont->bmp);
+    SDL_FreeSurface(mfont->bmp);
+    free(sfont);
+    free(mfont);
 }
 

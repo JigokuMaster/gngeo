@@ -113,7 +113,8 @@ void init_sdl(void /*char *rom_name*/) {
 #endif
 
     if (screen_init() == SDL_FALSE) {
-	printf("Screen initialization failed.\n");
+	//Add: output SDL error message.
+	printf("Screen initialization failed, %s\n", SDL_GetError());
 	exit(-1);
     }
     

@@ -101,6 +101,10 @@ static char * default_p2control = "";
 static char *default_p1control = "A=J0B9,B=J0B10,C=J0B11,D=J0B12,START=J0B18,COIN=J0B17"
 	"UPDOWN=J0A1,LEFTRIGHT=J0A0,JOY=J0H0";
 static char *default_p2control = "....";
+#elif defined(SYMBIAN)
+static char * default_p1control = "UP=K273,DOWN=K274,LEFT=K276,RIGHT=K275,A=K50,"
+		"B=K56,C=K52,D=K54,COIN=K49,START=K53";
+static char * default_p2control = "";
 #else
 	/* TODO: Make Querty default instead of azerty */
 static char * default_p1control = "A=K119,B=K120,C=K113,D=K115,START=K38,COIN=K34,"
@@ -435,6 +439,7 @@ void cf_init(void) {
 	cf_create_string_item("rompath", "Tell gngeo where your roms are", "PATH", 'i', symbian_gngeo_romsdir());
 	cf_create_string_item("biospath", "Tell gngeo where your neogeo bios is", "PATH", 'B', symbian_gngeo_biosdir());
 	cf_create_string_item("datafile", "Tell gngeo where his ressource file is", "PATH", 'd', symbian_gngeo_datafile());
+	cf_create_string_item("screenmode", "", "...", 0, "default");
 
 #else
 	cf_create_string_item("rompath", "Tell gngeo where your roms are", "PATH", 'i', DATA_DIRECTORY);
@@ -556,7 +561,15 @@ bool cf_save_file(char *filename, int flags) {
 		sprintf(conf_file, "%s/.gngeo/gngeorc", getenv("HOME"));
 #endif
 	}
-	conf_file_dst = alloca(strlen(conf_file) + 4);
+
+	size_t len = strlen(conf_file) + 4;	
+#ifdef USE_ALLOCA	
+	conf_file_dst = alloca(len);
+#else
+	conf_file_dst = malloc(len);
+	memset(conf_file_dst, 0, len);
+	CHECK_ALLOC(conf_file_dst);
+#endif
 	sprintf(conf_file_dst, "%s.t", conf_file);
 
 	if ((f_dst = fopen(conf_file_dst, "w")) == 0) {
@@ -614,8 +627,8 @@ bool cf_save_file(char *filename, int flags) {
 					fprintf(f_dst, "%s\n", buf);
 			}
 		}
-		fclose(f);
 
+		fclose(f);
 	}
 	/* Now save options that were not in the previous file */
 	for (i = 0; i < 128; i++) {
@@ -654,12 +667,22 @@ bool cf_save_file(char *filename, int flags) {
 			}
 		}
 	}
+
 	fclose(f_dst);
-
-	remove(conf_file);
-	rename(conf_file_dst, conf_file);
-
-	return true;
+	bool ret = true;
+	if(remove(conf_file)==-1)
+	{
+	    perror("failed to save config");
+	    ret = false;
+	}
+	else
+	{
+	    rename(conf_file_dst, conf_file);
+	}
+#ifndef USE_ALLOCA	
+	free(conf_file_dst);
+#endif
+	return ret;
 }
 
 void cf_reset_to_default(void) {
@@ -762,12 +785,14 @@ bool cf_open_file(char *filename) {
 					break;
 			}
 		} else {
-			/*printf("Unknow option %s\n",name);*/
+			printf("Unknow option %s\n",name);
 			/* unknow option...*/
 		}
 	}
 
 	cf_cache_conf();
+	//FIX: close conf_file.
+	fclose(f);
 	return true;
 }
 

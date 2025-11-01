@@ -157,13 +157,23 @@ void open_nvram(char *name) {
     FILE *f;
     int len = strlen(name) + strlen(gngeo_dir) + 4; /* ".nv\0" => 4 */
 
+#ifdef USE_ALLOCA	
     filename = (char *) alloca(len);
+#else
+    filename = (char *) malloc(len);    
+    CHECK_ALLOC(filename);
+    memset(filename, 0, len); 
+#endif    
     sprintf(filename, "%s%s.nv", gngeo_dir, name);
 
     if ((f = fopen(filename, "rb")) == 0)
         return;
     totread = fread(memory.sram, 1, 0x10000, f);
     fclose(f);
+
+#ifndef USE_ALLOCA	
+    free(filename);
+#endif
 
 }
 
@@ -181,13 +191,25 @@ void open_memcard(char *name) {
     FILE *f;
     int len = strlen("memcard") + strlen(gngeo_dir) + 1; /* ".nv\0" => 4 */
 
+#ifdef USE_ALLOCA	
     filename = (char *) alloca(len);
+#else
+    filename = (char *) malloc(len);    
+    CHECK_ALLOC(filename);
+    memset(filename, 0, len); 
+#endif    
     sprintf(filename, "%s%s", gngeo_dir, "memcard");
 
-    if ((f = fopen(filename, "rb")) == 0)
-        return;
-    totread = fread(memory.memcard, 1, 0x800, f);
-    fclose(f);
+    if ((f = fopen(filename, "rb")) != NULL)
+    {
+	totread = fread(memory.memcard, 1, 0x800, f);
+	fclose(f);
+    }
+ 
+#ifndef USE_ALLOCA	
+    free(filename);
+#endif
+   
 }
 
 void save_nvram(char *name) {
@@ -211,7 +233,14 @@ void save_nvram(char *name) {
     }
 
 
+
+#ifdef USE_ALLOCA	
     filename = (char *) alloca(len);
+#else
+    filename = (char *)malloc(len);    
+    CHECK_ALLOC(filename);
+    memset(filename, 0, len); 
+#endif    
 
     sprintf(filename, "%s%s.nv", gngeo_dir, name);
     
@@ -219,6 +248,9 @@ void save_nvram(char *name) {
         fwrite(memory.sram, 1, 0x10000, f);
         fclose(f);
     }
+#ifndef USE_ALLOCA 
+    free(filename);
+#endif    
 }
 
 void save_memcard(char *name) {
@@ -233,13 +265,23 @@ void save_memcard(char *name) {
     FILE *f;
     int len = strlen("memcard") + strlen(gngeo_dir) + 1; /* ".nv\0" => 4 */
 
+ 
+#ifdef USE_ALLOCA	
     filename = (char *) alloca(len);
+#else
+    filename = (char *)malloc(len);    
+    CHECK_ALLOC(filename);
+    memset(filename, 0, len); 
+#endif    
     sprintf(filename, "%s%s", gngeo_dir, "memcard");
 
     if ((f = fopen(filename, "wb")) != NULL) {
         fwrite(memory.memcard, 1, 0x800, f);
         fclose(f);
     }
+#ifndef USE_ALLOCA
+    free(filename);
+#endif    
 }
 
 bool close_game(void) {
@@ -253,34 +295,60 @@ bool close_game(void) {
     return true;
 }
 
-bool load_game_config(char *rom_name) {
-	char *gpath;
-	char *drconf;
+bool load_game_config(char *rom_name)
+{
+    char *gpath;
+    char *drconf;
 #ifdef EMBEDDED_FS
     gpath=ROOTPATH"conf/";
 #else
     gpath=get_gngeo_dir();
-#endif
-	cf_reset_to_default();
-	cf_open_file(NULL); /* Reset possible previous setting */
-	if (rom_name) {
-		if (strstr(rom_name,".gno")!=NULL) {
-			char *name=dr_gno_romname(rom_name);
-			if (name) {
-				printf("Tring to load a gno file %s %s\n",rom_name,name);
-				drconf=alloca(strlen(gpath)+strlen(name)+strlen(".cf")+1);
-				sprintf(drconf,"%s%s.cf",gpath,name);
-			} else {
-				printf("Error while loading %s\n",rom_name);
-				return false;
-			}
-		} else {
-			drconf=alloca(strlen(gpath)+strlen(rom_name)+strlen(".cf")+1);
-			sprintf(drconf,"%s%s.cf",gpath,rom_name);
-		}
-		cf_open_file(drconf);
+#endif 
+    cf_reset_to_default();
+    cf_open_file(NULL); /* Reset possible previous setting */
+    size_t len = 0;
+    if (rom_name)
+    {
+	if (strstr(rom_name,".gno")!=NULL)
+	{
+	    char *name = dr_gno_romname(rom_name);
+	    if (name)
+	    {
+		printf("Tring to load a gno file %s %s\n",rom_name,name);
+		len = strlen(gpath)+strlen(name)+strlen(".cf")+1;
+#ifdef USE_ALLOCA	
+		drconf = alloca(len);
+#else
+		drconf = (char *)malloc(len);    
+		CHECK_ALLOC(drconf);
+		memset(drconf, 0, len); 
+#endif 	
+		sprintf(drconf,"%s%s.cf",gpath,name);
+	    } 
+	    else {
+		printf("Error while loading %s\n",rom_name);
+		return false;
+	    }
 	}
-	return true;
+	else
+	{
+	    len = strlen(gpath)+strlen(rom_name)+strlen(".cf")+1;
+#ifdef USE_ALLOCA	
+	    drconf = alloca(len);
+#else
+	    drconf = (char *)malloc(len);    
+	    CHECK_ALLOC(drconf);
+	    memset(drconf, 0, len); 
+#endif 
+	    sprintf(drconf,"%s%s.cf",gpath,rom_name);
+	}
+	cf_open_file(drconf);
+    }
+
+#ifndef USE_ALLOCA	
+    free(drconf);
+#endif   
+    return true;
 }
 
 bool init_game(char *rom_name) {

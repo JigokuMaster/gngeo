@@ -86,10 +86,10 @@ void symbian_init()
     dup2(fd2, 2);
     
     /* test logging ...*/
-    fprintf(stderr, "GNGEO_PRIVATE_DIR=%s\n", symbian_private_dir);
-    fprintf(stderr, "GNGEO_DIR=%s\n", default_gngeo_dir);
-    fprintf(stderr, "GNGEO_ROMS_DIR=%s\n", default_gngeo_romsdir);
-    fprintf(stderr, "GNGEO_DATAFILE=%s\n", gngeo_datafile);
+    fprintf(stdout, "GNGEO_PRIVATE_DIR=%s\n", symbian_private_dir);
+    fprintf(stdout, "GNGEO_DIR=%s\n", default_gngeo_dir);
+    fprintf(stdout, "GNGEO_ROMS_DIR=%s\n", default_gngeo_romsdir);
+    fprintf(stdout, "GNGEO_DATAFILE=%s\n", gngeo_datafile);
 }
 
 
@@ -110,23 +110,34 @@ char* symbian_gngeo_biosdir()
 
 char* symbian_gngeo_datafile()
 {
-	return gngeo_datafile;
+    return gngeo_datafile;
 }
 
-void symbian_audio_volume(int v, int update)
+void symbian_audio_volume_set(int v, int update)
 {
-    if(!update)
+    if(update)
     {
-       EpocAudioSetVolume(v);
-       return; 
+	EPOC_SetAudioVolume(EPOC_GetAudioVolume() + v);
     }
-
-    int new_v = EpocAudioGetVolume() + v;
-    EpocAudioSetVolume(new_v);
-    
+    else
+    {
+	EPOC_SetAudioVolume(v);
+    }
 }
 
+int symbian_audio_volume_get()
+{
+    return EPOC_GetAudioVolume();
+}
 
+int symbian_ui_orientation_get()
+{
+    return GetScreenOrientation();
+}
 
+int symbian_ui_orientation_setup()
+{
+    return SetupScreenOrientation();
+}
 
 

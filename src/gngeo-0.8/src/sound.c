@@ -134,6 +134,10 @@ int init_sdl_audio(void)
     SDL_OpenAudio(desired, obtain);
     printf("Obtained sample rate: %d\n",obtain->freq);
     conf.sample_rate=obtain->freq;
+#ifdef SYMBIAN
+    //FIX: the sound very lound
+    symbian_audio_volume_set(30, 0);
+#endif    
     return 1;
 }
 

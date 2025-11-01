@@ -22,13 +22,13 @@ EPOCSTACKSIZE 80000
 
 CAPABILITY ReadUserData WriteUserData
 
-USERINCLUDE . gngeo-0.8\src gngeo-0.8\src\ym2610
-SYSTEMINCLUDE gngeo-0.8\src  \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL 
+USERINCLUDE  ..\src\gngeo-0.8\src ..\src\gngeo-0.8\src\ym2610
+SYSTEMINCLUDE ..\src\gngeo-0.8\src  \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL 
 
-SOURCEPATH .
-SOURCE sdlapp.cpp
+SOURCEPATH ..\src
+SOURCE sdlexe.cpp
 
-SOURCEPATH gngeo-0.8\src
+SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE main.c
 SOURCE symbian_s60.c
 SOURCE pd4990a.c
@@ -62,7 +62,7 @@ SOURCE mamez80_interf.c
 SOURCE Video_arm.s Memcpy.S
 
 
-SOURCEPATH .
+SOURCEPATH ..\data
 START RESOURCE  gngeo.rss
 HEADER
 TARGET          gngeo
@@ -70,7 +70,7 @@ TARGETPATH      resource\apps
 END  // RESOURCE
 
 
-SOURCEPATH .
+SOURCEPATH ..\data
 START RESOURCE gngeo_reg.rss
 TARGET gngeo_reg
 
@@ -82,16 +82,16 @@ END
 LIBRARY euser.lib
 LIBRARY bafl.lib
 LIBRARY avkon.lib
-LIBRARY apparc.lib
+LIBRARY apparc.lib apgrfx.lib
 LIBRARY cone.lib
 LIBRARY eikcore.lib
 LIBRARY fbscli.lib ws32.lib  gdi.lib
 LIBRARY  mediaclientaudiostream.lib
 LIBRARY efsrv.lib bitgdi.lib scdv.lib hal.lib
+LIBRARY flogger.lib
 
 LIBRARY libc.lib libm.lib libz.lib
-STATICLIBRARY nsdl.lib
-STATICLIBRARY vorbis.lib ogg.lib nsdl_mixer.lib
+STATICLIBRARY SDL.lib
 STATICLIBRARY libgn_generator68k.lib libgn_mamez80.lib libgn_ym2610.lib
 STATICLIBRARY libgn_blitter.lib libgn_effect.lib 
 

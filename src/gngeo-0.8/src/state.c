@@ -163,16 +163,36 @@ Uint32 how_many_slot(char *game) {
 	char *gngeo_dir=get_gngeo_dir();
 #endif
 	Uint32 slot=0;
-	st_name=(char*)alloca(strlen(gngeo_dir)+strlen(game)+5);
-	while (1) {
-		sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
-		if (st_name && (f=fopen(st_name,"rb"))) {
+	size_t len = strlen(gngeo_dir)+strlen(game)+5;
+#ifdef USE_ALLOCA	
+	st_name = (char*)alloca(len);
+#else
+	st_name = (char*)malloc(len);
+	CHECK_ALLOC(st_name);
+#endif	
+	while (1)
+	{
+#ifndef USE_ALLOCA
+		memset(st_name, 0, len);
+#endif    
+	    	sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
+
+		if (st_name && (f=fopen(st_name,"rb")))
+		{
 			fclose(f);
 			slot++;
-		} else
-		    return slot;
+		} 
+		else{
+		    break;
+		}
 	}
+
+#ifndef USE_ALLOCA
+	free(st_name);
+	return slot;
+#endif 
 }
+
 #if 0
 SDL_Surface *load_state_img(char *game,int slot) {
 	char *st_name;
@@ -396,15 +416,24 @@ bool save_state(char *game,int slot) {
     Uint8  endian=0;
 #endif
     Uint32 rate=(conf.sound?conf.sample_rate:0);
-
-    st_name=(char*)alloca(strlen(gngeo_dir)+strlen(game)+5);
+    size_t len = strlen(gngeo_dir)+strlen(game)+5;
+#ifdef USE_ALLOCA	   
+    st_name = (char*)alloca(len);
+#else 
+    st_name = (char*)malloc(len);
+    memset(st_name, 0, len);
+    CHECK_ALLOC(st_name);
+#endif    
     sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
 
     if ((gzf=gzopen(st_name,"wb"))==NULL) {
 	printf("can't write to %s\n",st_name);
 	return false;
     }
-
+#ifndef USE_ALLOCA	   
+    free(st_name);
+#endif
+    
 /*
 #ifndef GP2X
     SDL_BlitSurface(buffer, &buf_rect, state_img, &screen_rect);
@@ -440,29 +469,39 @@ bool save_state(char *game,int slot) {
 
 #else
 
-static gzFile *open_state(char *game,int slot,int mode) {
-	char *st_name;
+static gzFile *open_state(char *game,int slot,int mode)
+{
+    char *st_name;
 //    char *st_name_len;
 #ifdef EMBEDDED_FS
-	char *gngeo_dir=ROOTPATH"save/";
+    char *gngeo_dir=ROOTPATH"save/";
 #else
-	char *gngeo_dir=get_gngeo_dir();
+    char *gngeo_dir=get_gngeo_dir();
 #endif
-	char string[20];
-	char *m=(mode==STWRITE?"wb":"rb");
-	gzFile *gzf;
-	int  flags;
-	Uint32 rate;
-
-    st_name=(char*)alloca(strlen(gngeo_dir)+strlen(game)+5);
+    char string[20];
+    char *m=(mode==STWRITE?"wb":"rb");
+    gzFile *gzf;
+    int  flags;
+    Uint32 rate;
+    size_t len = strlen(gngeo_dir)+strlen(game)+5;
+#ifdef USE_ALLOCA	   
+    st_name = (char*)alloca(len);
+#else 
+    st_name = (char*)malloc(len);
+    memset(st_name, 0, len);
+    CHECK_ALLOC(st_name);
+#endif    
     sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
 
-	if ((gzf = gzopen(st_name, m)) == NULL) {
+    if ((gzf = gzopen(st_name, m)) == NULL) {
 		printf("%s not found\n", st_name);
 		return NULL;
     }
 
-	if(mode==STREAD) {
+#ifndef USE_ALLOCA	   
+    free(st_name);
+#endif
+    if(mode==STREAD) {
 
 		memset(string, 0, 20);
 		gzread(gzf, string, 6);

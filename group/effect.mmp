@@ -1,5 +1,6 @@
 OPTION GCCE -Wno-unused
 
+MACRO OPENC
 MACRO ASM
 MACRO HAVE_CONFIG_H
 
@@ -7,10 +8,10 @@ TARGET libgn_effect.lib
 TARGETTYPE lib
 
 
-USERINCLUDE gngeo-0.8\src\blitter
-SYSTEMINCLUDE gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL
+USERINCLUDE ..\src\gngeo-0.8\src\blitter
+SYSTEMINCLUDE ..\src\gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL
 
-SOURCEPATH gngeo-0.8\src\effect
+SOURCEPATH ..\src\gngeo-0.8\src\effect
 
 SOURCE scale2x.c
 SOURCE scanline.c

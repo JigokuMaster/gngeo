@@ -1,0 +1,15 @@
+OPTION GCCE -Wno-unused
+
+MACRO HAVE_CONFIG_H
+MACRO   OPENC
+MACRO SYMBIAN
+
+TARGET libgn_blitter.lib
+TARGETTYPE lib
+
+
+USERINCLUDE ..\src\gngeo-0.8\src\blitter
+SYSTEMINCLUDE ..\src\gngeo-0.8\src \epoc32\include  \epoc32\include\SDL \epoc32\include\stdapis
+
+SOURCEPATH ..\src\gngeo-0.8\src\blitter
+SOURCE overlay.c soft.c
