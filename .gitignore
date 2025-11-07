@@ -1,4 +1,8 @@
 *.o
 data/*.zip
 sis/*.sis
-
+*.a
+*.0
+*.Po
+*.log
+src/gngeo-0.8/src/gngeo

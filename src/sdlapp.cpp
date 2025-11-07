@@ -9,7 +9,6 @@
 
 const TUid KUidSdlApp={0xbe99619c};
 
-
 class MExitWait
  	{
  	public:
@@ -236,7 +235,7 @@ TInt CSdlAppUi::SdlEvent(TInt aEvent, TInt /*aParam*/)
 
 void CSdlAppUi::StartSDLApp()
 	{
-  	TInt flags = CSDL::ENoFlags | CSDL::EAllowImageResize;
+  	TInt flags = CSDL::EAllowImageResize;
   	iSdl = CSDL::NewL(flags);
   	iSdl->SetObserver(this);
   	iSdl->DisableKeyBlocking(*this);
@@ -328,4 +327,12 @@ GLDEF_C TInt E32Main()
     return EikStart::RunApplication(NewApplication);
     }
     
+extern "C" int SetupScreenOrientation()
+{
+    return 0;
+}
 
+extern "C" int GetScreenOrientation()
+{
+    return 0;
+}

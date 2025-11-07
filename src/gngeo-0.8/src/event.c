@@ -60,7 +60,6 @@ bool create_joymap_from_string(int player,char *jconf)
 
 	char* tmp = strdup(jconf);
 	v = strtok(tmp,",");
-	//printf("V1=%s\n",v);
 	while(v)
 	{
 	    rc = sscanf(v,"%[^=]=%c%d",butid,&type, &code);
@@ -310,138 +309,6 @@ int handle_pdep_event(SDL_Event *event) {
 #define EVGAME 1
 #define EVMENU 2
 
-#ifdef SYMBIANX
-
-extern void symbian_audio_volume_set(int v, int update);
-extern int symbian_audio_volume_get();
-
-int handle_event(void)
-{
-
-    memory.intern_coin = 0x7;
-    memory.intern_start = 0x8F;
-    memory.intern_p1 = 0xFF;
-	memory.intern_p2 = 0xFF;
-	SDL_PumpEvents();
-	const Uint8* kbstate = SDL_GetKeyState(NULL);
-
-	if (kbstate[SDLK_LEFT])
-	{
-
-         memory.intern_p1 &= 0xFB;
-	}
-	if (kbstate[SDLK_RIGHT])
-	{
-
-         memory.intern_p1 &= 0xF7;
-	}
-	if (kbstate[SDLK_UP])
-	{
-
-         memory.intern_p1 &= 0xFE;
-	}
-	if (kbstate[SDLK_DOWN])
-	{
-
-         memory.intern_p1 &= 0xFD;
-	}
-
-	if (kbstate[SDLK_1])
-	{
-        memory.intern_coin &= 0x6;
-	}
-	if (kbstate[SDLK_RETURN] || kbstate[SDLK_5])
-	{
-	   memory.intern_start &= 0xFE;
-	}
-	
-
-	if (kbstate[SDLK_2])
-	{
-	    memory.intern_p1 &= 0xEF; // A
-	}
-	if (kbstate[SDLK_4])
-	{
-	    memory.intern_p1 &= 0xBF; // C
-	}
-	if (kbstate[SDLK_6])
-	{
-	    memory.intern_p1 &= 0x7F; // D
-	}
-	if (kbstate[SDLK_8])
-	{
-        memory.intern_p1 &= 0xDF; // B
-	}
-	if (kbstate[SDLK_SPACE]) 
-	{
-
-        return 1;
-	}
-	if (conf.sound && kbstate[SDLK_HASH]) 
-	{
-	    symbian_audio_volume(10, 1);
-	}
-	if (conf.sound && kbstate[SDLK_ASTERISK]) 
-	{
-	    symbian_audio_volume(-10, 1);
-	}
-    return 0;
-
-}
-
-void reset_event(void)
-{
-	SDL_Event event;
-	while (SDL_PollEvent(&event));
-}
-
-int wait_event(void)
-{
-	SDL_Event event;
-	while (SDL_PollEvent(&event))
-	{
-	switch (event.type)
-	{
-	case SDL_KEYDOWN:
-		/* Some default keyboard standard key */
-		switch (event.key.keysym.sym)
-		{
-		case SDLK_SPACE:
-			return GN_MENU_KEY;
-			break;
-		case SDLK_UP:
-			return GN_UP;
-			break;	
-		case SDLK_DOWN:
-			return GN_DOWN;
-			break;	
-		case SDLK_LEFT:
-			return GN_LEFT;
-			break;	
-		case SDLK_RIGHT:
-			return GN_RIGHT;
-			break;	
-		case SDLK_ESCAPE:
-		case SDLK_9:
-			return GN_A;
-			break;
-		case SDLK_RETURN:
-			return GN_B;
-			break;
-		default:
-			break;
-		}
-		break;
-	default:
-        break;
-    }
-    }
-	return 0;
-}
-
-
-
-#else
 int handle_event(void) {
 	SDL_Event event;
 //	int i;
@@ -472,7 +339,7 @@ int handle_event(void) {
 			}
 		break;
 	    case SDL_KEYDOWN:
-		    printf("SDL_KEY %d, PKEY %d\n", event.key.keysym.sym, jmap->key[event.key.keysym.sym].player);
+		    //printf("SDL_KEY %d, PKEY %d\n", event.key.keysym.sym, jmap->key[event.key.keysym.sym].player);
 		    switch (jmap->key[event.key.keysym.sym].player) {
 			case 1:
 				joy_state[0][jmap->key[event.key.keysym.sym].map]=1;
@@ -703,7 +570,7 @@ int wait_event(void) {
 	switch (event.type) {
 	case SDL_KEYDOWN:
 		/* Some default keyboard standard key */
-		switch (event.key.keysym.sym) {
+		switch (event.key.keysym.sym) {		    
 		case SDLK_TAB:
 			joy_state[0][GN_MENU_KEY]=1;
 			//last=GN_MENU_KEY;
@@ -811,4 +678,4 @@ int wait_event(void) {
 */
 	return 0;
 }
-#endif
+

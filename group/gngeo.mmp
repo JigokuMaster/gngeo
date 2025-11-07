@@ -1,4 +1,4 @@
-OPTION GCCE -Wno-unused -g -O3 -ftracer -fstrength-reduce -funroll-loops  -fomit-frame-pointer -fstrict-aliasing -ffast-math
+OPTION GCCE -Wno-unused -O3 -ftracer -fstrength-reduce -funroll-loops  -fomit-frame-pointer -fstrict-aliasing -ffast-math
 MACRO   OPENC
 MACRO   SYMBIAN
 MACRO   HAVE_CONFIG_H
@@ -23,10 +23,13 @@ EPOCSTACKSIZE 80000
 CAPABILITY ReadUserData WriteUserData
 
 USERINCLUDE  ..\src\gngeo-0.8\src ..\src\gngeo-0.8\src\ym2610
-SYSTEMINCLUDE ..\src\gngeo-0.8\src  \epoc32\include \epoc32\include\stdapis \epoc32\include\SDL 
+SYSTEMINCLUDE ..\src\gngeo-0.8\src  
+SYSTEMINCLUDE \epoc32\include \epoc32\include\stdapis
+SYSTEMINCLUDE \epoc32\include\SDL \epoc32\include\SDL\inc 
 
 SOURCEPATH ..\src
 SOURCE sdlexe.cpp
+
 
 SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE main.c
@@ -87,8 +90,12 @@ LIBRARY cone.lib
 LIBRARY eikcore.lib
 LIBRARY fbscli.lib ws32.lib  gdi.lib
 LIBRARY  mediaclientaudiostream.lib
-LIBRARY efsrv.lib bitgdi.lib scdv.lib hal.lib
+LIBRARY efsrv.lib bitgdi.lib scdv.lib
+LIBRARY  hal.lib //remconinterfacebase.lib remconcoreapi.lib
+#ifdef DEBUG_TRACE_ENABLED
 LIBRARY flogger.lib
+#endif
+
 
 LIBRARY libc.lib libm.lib libz.lib
 STATICLIBRARY SDL.lib

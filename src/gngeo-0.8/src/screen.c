@@ -193,38 +193,10 @@ SDL_bool screen_init() {
 		visible_area.h = 224;
 	}
 */
-		visible_area.x = 16;
-		visible_area.y = 16;
-		visible_area.w = 320;
-		visible_area.h = 224;
-#ifdef SYMBIAN	
-		bool hw_surface = CF_BOOL(cf_get_item_by_name("hwsurface"));
-		SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN | (hw_surface?SDL_HWSURFACE:SDL_SWSURFACE));
-		int sw = modes[0]->w;
-		int sh = modes[0]->h;
-		printf("screen resolution: %dx%d\n", sw, sh);  
-		if(sw >= 320)
-		{	
-		    //visible_area.x = 24;
-		    //visible_area.y = 16;
-		    // center
-		    visible_area.x = 0; 
-		    visible_area.y = 0;
-		    visible_area.w = sw;
-		    visible_area.h = sh;
-		}
-		else if (sw == 240 && sh == 320)
-		{
-		    visible_area.x = 0; 
-		    visible_area.y = 0;
-		    visible_area.w = sh;
-		    visible_area.h = sw;
-		}    
-
-
-
-#endif
-
+	visible_area.x = 16;
+	visible_area.y = 16;
+	visible_area.w = 320;
+	visible_area.h = 224;
 
 	/* Initialization of some variables */
 	/*
@@ -254,8 +226,16 @@ SDL_bool screen_init() {
 		return SDL_FALSE;
 
 	/* Interpolation surface */
-	blend = SDL_CreateRGBSurface(SDL_SWSURFACE/*(conf.hw_surface ? SDL_HWSURFACE : SDL_SWSURFACE)*/,
+	if(interpolation)
+	{
+	    blend = SDL_CreateRGBSurface(SDL_SWSURFACE/*(conf.hw_surface ? SDL_HWSURFACE : SDL_SWSURFACE)*/,
 			352, 256, 16, 0xF800, 0x7E0, 0x1F, 0);
+	}
+	else
+	{
+	    blend = NULL;
+	    tmp = NULL;
+	}
 	printf("CURSOR=%d\n", SDL_ShowCursor(SDL_QUERY));
 	if (SDL_ShowCursor(SDL_QUERY) == 1)
 		SDL_ShowCursor(SDL_DISABLE);
@@ -336,10 +316,10 @@ SDL_bool screen_reinit(void) {
 	}
 */
 
-		visible_area.x = 16;
-		visible_area.y = 16;
-		visible_area.w = 320;
-		visible_area.h = 224;
+	visible_area.x = 16;
+	visible_area.y = 16;
+	visible_area.w = 320;
+	visible_area.h = 224;
 
 	/* Initialization of some variables */
 	/*
@@ -420,8 +400,21 @@ void screen_update() {
 	(*blitter[nblitter].update) ();
 }
 
-void screen_close() {
+void screen_close()
+{
+    if(blend != NULL){
 	SDL_FreeSurface(blend);
+	blend = NULL;
+    }
+    if(buffer != NULL){
+	SDL_FreeSurface(buffer);
+	buffer = NULL;
+    }
+    if(tmp != NULL){
+	SDL_FreeSurface(tmp);
+	tmp = NULL;
+    }
+    SDL_FreeSurface(fontbuf);
 }
 
 void screen_fullscreen() {

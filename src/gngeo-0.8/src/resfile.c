@@ -8,8 +8,6 @@
 #include "unzip.h"
 //#include "stb_zlib.h"
 #include "conf.h"
-#include "stb_image.h"
-
 
 void zread_char(ZFILE *gz, char *c, int len) {
 	int rc;
@@ -93,13 +91,25 @@ ROM_DEF *res_load_drv(char *name) {
  * supported format: bmp, tga, jpeg, png, psd
  * 24&32bpp only
  */
-SDL_Surface *res_load_stbi(char *bmp) {
+//SDL_Surface *
+RESDATA* res_load_stbi(char *bmp, SDL_Surface **s) {
 	PKZIP *pz;
-	SDL_Surface *s;
 	Uint8 * buffer;
 	unsigned int size;
 	int x, y, comp;
-	stbi_uc *data = NULL;
+	if (s == NULL)
+	{
+	    return NULL;
+	}
+
+	RESDATA* rd = malloc(sizeof(RESDATA));
+	if(rd == NULL)
+	{
+	    return NULL;
+	} 
+
+	rd->data = NULL;
+	rd->img = NULL;
 
 	pz = gn_open_zip(CF_STR(cf_get_item_by_name("datafile")));
 	if (!pz)
@@ -108,39 +118,46 @@ SDL_Surface *res_load_stbi(char *bmp) {
 	if (!buffer)
 		return NULL;
 
-	data = stbi_load_from_memory(buffer, size, &x, &y, &comp, 0);
+	rd->data = stbi_load_from_memory(buffer, size, &x, &y, &comp, 0);
 
-	printf("STBILOAD %p %d %d %d %d\n", data, x, y, comp, x * comp);
+	printf("STBILOAD %p %d %d %d %d\n", rd->data, x, y, comp, x * comp);
 	switch (comp) {
 #ifdef WORDS_BIGENDIAN
 	case 3:
-		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+		*s = SDL_CreateRGBSurfaceFrom((void*) rd->data, x, y, comp * 8, x * comp,
 				0xFF0000, 0xFF00, 0xFF, 0);
 		break;
 	case 4:
-		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+		*s = SDL_CreateRGBSurfaceFrom((void*) rd->data, x, y, comp * 8, x * comp,
 				0xFF000000, 0xFF0000, 0xFF00, 0xFF);
 		break;
 #else
 	case 3:
-		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+		*s = SDL_CreateRGBSurfaceFrom((void*) rd->data, x, y, comp * 8, x * comp,
 				0xFF, 0xFF00, 0xFF0000, 0);
 		break;
 	case 4:
-		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+		*s = SDL_CreateRGBSurfaceFrom((void*) rd->data, x, y, comp * 8, x * comp,
 				0xFF, 0xFF00, 0xFF0000, 0xFF000000);
 		break;
 #endif
 	default:
 		printf("RES load STBI: Unhandled bpp surface\n");
-		s = NULL;
+		*s = NULL;
 		break;
 	}
+
 	free(buffer);
-	if (s == NULL)
-		printf("RES load STBI: Couldn't create surface\n");
 	gn_close_zip(pz);
-	return s;
+
+	if (*s == NULL)
+	{
+	    free(rd);
+	    printf("RES load STBI: Couldn't create surface\n");
+	    return NULL;
+	}	
+	rd->img = *s;
+	return rd;
 }
 /*
  * Load a Microsoft BMP from gngeo.dat
@@ -195,3 +212,14 @@ void *res_load_data(char *name) {
 	gn_close_zip(pz);
 	return buffer;
 }
+
+void res_free_data(RESDATA* rd)
+{
+    if(rd != NULL){
+	stbi_image_free(rd->data);
+	rd->data = NULL;
+	free(rd);
+	rd = NULL;
+    }
+}    
+

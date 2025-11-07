@@ -96,12 +96,24 @@ void sdl_set_title(char *name) {
     }
 }
 
+
+SDL_Surface *icon = NULL;
+
+void cleanup_gngeo()
+{
+    free_menu();
+    if(icon != NULL)
+    {
+	SDL_FreeSurface(icon);
+    }
+    screen_close(); // free buffer
+}
+
 void init_sdl(void /*char *rom_name*/) {
     int surface_type = (CF_BOOL(cf_get_item_by_name("hwsurface"))? SDL_HWSURFACE : SDL_SWSURFACE);
 
 
     char *nomouse = getenv("SDL_NOMOUSE");
-    SDL_Surface *icon;
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE);
     //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
@@ -120,8 +132,7 @@ void init_sdl(void /*char *rom_name*/) {
     
 
 	
-    buffer = SDL_CreateRGBSurface(surface_type, 352, 256, 16, 0xF800, 0x7E0,
-				  0x1F, 0);
+    buffer = SDL_CreateRGBSurface(surface_type, 352, 256, 16, 0xF800, 0x7E0, 0x1F, 0);
 	
     SDL_FillRect(buffer,NULL,SDL_MapRGB(buffer->format,0xE5,0xE5,0xE5));
 
@@ -129,19 +140,22 @@ void init_sdl(void /*char *rom_name*/) {
 				       , 24, font_image.width * 3, 0xFF0000, 0xFF00, 0xFF, 0);
     SDL_SetColorKey(fontbuf,SDL_SRCCOLORKEY,SDL_MapRGB(fontbuf->format,0xFF,0,0xFF));
     fontbuf=SDL_DisplayFormat(fontbuf);
+#ifndef SYMBIAN    
     icon = SDL_CreateRGBSurfaceFrom(gngeo_icon.pixel_data, gngeo_icon.width,
 				    gngeo_icon.height, gngeo_icon.bytes_per_pixel*8,
 				    gngeo_icon.width * gngeo_icon.bytes_per_pixel,
 				    0xFF, 0xFF00, 0xFF0000, 0);
     
     SDL_WM_SetIcon(icon,NULL);
-
+#endif
     calculate_hotkey_bitmasks();    
 	init_event();
 
     //if (nomouse == NULL)
 	//SDL_ShowCursor(SDL_DISABLE);
 }
+
+
 static void catch_me(int signo) {
 	printf("Catch a sigsegv\n");
 	SDL_Quit();
@@ -193,34 +207,40 @@ int main(int argc, char *argv[])
 #ifdef GP2X
     gp2x_init();
 #endif
-    if (gn_init_skin()!=SDL_TRUE) {
-	    printf("Can't load skin...\n");
-            exit(1);
+    if (gn_init_skin()!=SDL_TRUE)
+    {
+	cleanup_gngeo();
+	printf("Can't load skin...\n");
+        exit(1);
     }    
 
-	reset_frame_skip();
+    reset_frame_skip();
 
     if (conf.debug) conf.sound=0;
 
 /* Launch the specified game, or the rom browser if no game was specified*/
-	if (!rom_name) {
-	//	rom_browser_menu();
-		run_menu();
-		printf("GAME %s\n",conf.game);
-		if (conf.game==NULL)
-		{
-			SDL_Quit();
-		    return 0;
-		}
-	} else {
-
-		if (init_game(rom_name)!=SDL_TRUE) {
-			printf("Can't init %s...\n",rom_name);
-            exit(1);
-		}    
+    if (!rom_name)
+    {
+	//rom_browser_menu();
+	run_menu();
+	printf("GAME %s\n",conf.game);
+	if (conf.game==NULL)
+	{
+	    cleanup_gngeo();
+	    SDL_Quit();
+	    return 0;
 	}
+    } 
+    else{
 
-	/* If asked, do a .gno dump and exit*/
+	if (init_game(rom_name)!= SDL_TRUE)
+	{
+	    printf("Can't init %s...\n",rom_name);
+            exit(1);
+	}    
+    }
+
+    /* If asked, do a .gno dump and exit*/
     if (CF_BOOL(cf_get_item_by_name("dump"))) {
         char dump[8+4+1];
         sprintf(dump,"%s.gno",rom_name);
@@ -229,13 +249,15 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if (conf.debug)
+    if (conf.debug){
 	    debug_loop();
-    else
+    }
+    else{
 	    main_loop();
-
+    }
 
     close_game();
-	SDL_Quit();
+    cleanup_gngeo();    
+    SDL_Quit();
     return 0;
 }

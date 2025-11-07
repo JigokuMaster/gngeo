@@ -498,7 +498,6 @@ CSDLAppUi::~CSDLAppUi()
 void CSDLAppUi::ConstructL()
 {
 	gAppUi = this;
-	iLandScapeMode = ETrue;
 	iResOffset = -1;
 #ifdef HAVE_SDL_DLL 	
  	BaseConstructL(ENoAppResourceFile | ENoScreenFurniture);
@@ -515,9 +514,8 @@ void CSDLAppUi::ConstructL()
 	TFileName name(_L("\\resource\\apps\\gngeo.mbm"));
 #endif
 
-	//TEntry e;
-	//const TInt err = iEikonEnv->FsSession().Entry(name, e);
-
+	iLandScapeMode = ApplicationRect().Width() < 320;// 240x320
+	
 #ifdef USE_VIRTUALMOUSE
 
 	iCBmp = iEikonEnv->CreateBitmapL(name, 0);
@@ -556,13 +554,7 @@ TBool CSDLAppUi::LandScapeModeEnabled()
 TBool CSDLAppUi::SetupScreenOrientationL(TBool aSetOrientation)
 {
     
-    //TRect appRect = ApplicationRect();
-    /*if (appRect.Width() == 240) && (appRect.Height() == 320);
-    {
-	iLandScapeMode = EFalse;
-	return EFalse;
-    }	
-    */
+   
     TBuf8<256> cmd; 
     CDesC8ArrayFlat* appParams = new (ELeave) CDesC8ArrayFlat(8);
     RFile file;
@@ -574,7 +566,6 @@ TBool CSDLAppUi::SetupScreenOrientationL(TBool aSetOrientation)
 	file.Close();
 	MakeCCmdLineL(cmd, *appParams);	
     }
-
 
     // read orientation mode from sdl_param.txt
     _LIT8(KMode1, "-portrait");
@@ -699,7 +690,9 @@ TBool CSDLAppUi::ProcessCommandParametersL(CApaCommandLine &aCommandLine)
  		}
 
  	iWait = new (ELeave) CExitWait(*this);
-	SetupScreenOrientationL(ETrue); // must be called after iSdl and iWait are created, see HandleWsEventL	
+	if(iLandScapeMode){
+	    SetupScreenOrientationL(ETrue); // must be called after iSdl and iWait are created, see HandleWsEventL
+	}
  	iSdl->CallMainL(gSDLClass.Main(), &iWait->iStatus, iParams, CSDL::ENoParamFlags, 0xA000);
  	}
  	

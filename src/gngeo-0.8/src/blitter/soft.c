@@ -33,6 +33,7 @@ blitter_soft_init()
 {
 	Uint32 width = visible_area.w;
 	Uint32 height = visible_area.h;
+	
 #ifdef GP2X
 	Uint32 screen_w;
 	int hw_surface=SDL_HWSURFACE/*|SDL_FULLSCREEN|SDL_DOUBLEBUF*/;
@@ -70,6 +71,29 @@ blitter_soft_init()
 
 
 #endif
+
+
+#ifdef SYMBIAN	
+	sdl_flags = 0;
+	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
+	width = modes[0]->w;
+	if(width < 320)
+	{
+	    width = 304;
+	}    
+	height = modes[0]->h; 
+	if(height < 224)
+	{
+	    height = 224;
+	} 
+	screen_rect.x = SDL_max(0, SDL_abs(width-visible_area.w)/2); 
+	screen_rect.y = SDL_max(0, SDL_abs(height-visible_area.h)/2); 
+	screen_rect.w = width;
+	screen_rect.h = height;
+	printf("screen resolution: %dx%d\n", width, height); 	
+	printf("neogen screen xy: %d,%d\n", screen_rect.x , screen_rect.y); 
+#endif
+
 	if (neffect!=0)	scale =1;
 	if (scale == 1) {
 	    width *=effect[neffect].x_ratio;
@@ -131,11 +155,10 @@ blitter_soft_init()
 		if (screen_rect.y<0) {visible_area.y-=screen_rect.y;screen_rect.y=0;}
 	}
 
-
 #else
-	screen = SDL_SetVideoMode(width, height, 32, sdl_flags);
+	screen = SDL_SetVideoMode(width, height, 16, sdl_flags);
 	if(screen == NULL)
-	{
+	{ 
 	    return SDL_FALSE;
 	}    
 	//SDL_ShowCursor(SDL_DISABLE);

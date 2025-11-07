@@ -10,13 +10,14 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU Library General Public License for more details.
- *
+ *i
+
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. 
  */
 
-#define SYMBIAN 1
+//#define SYMBIAN 1
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -68,14 +69,14 @@ typedef struct GNFONT {
 	Sint8 pad;
 } GNFONT;
 
-static SDL_Surface *menu_buf;
-static SDL_Surface *menu_back;
-static SDL_Surface *back;
-static GNFONT *sfont;
-static GNFONT *mfont;
+static SDL_Surface *menu_buf = NULL;
+static SDL_Surface *menu_back = NULL;
+static SDL_Surface *back = NULL;
+static GNFONT *sfont = NULL;
+static GNFONT *mfont = NULL;
 static SDL_Surface *gngeo_logo, *gngeo_mask, *pbar_logo;
-
 static SDL_Surface *arrow_l, *arrow_r, *arrow_u, *arrow_d;
+
 static int interp;
 
 #define MENU_BIG   0
@@ -350,16 +351,24 @@ static char *romlist[] = {
 };
 
 #define COL32_TO_16(col) ((((col&0xff0000)>>19)<<11)|(((col&0xFF00)>>10)<<5)|((col&0xFF)>>3))
-
+#if 0
 GNFONT *load_font(char *file) {
 	GNFONT *ft = malloc(sizeof (GNFONT));
 	int i;
 	int x = 0;
 	Uint32 *b;
 	if (!ft) return NULL;
+	RESDATA* rd = res_load_stbi(file, &ft->bmp);
+	if (!rd)
+	{
+	    free(ft);
+	    return NULL;
+	}
 
-	ft->bmp = res_load_stbi(file);
-	if (!ft->bmp) {
+	//res_free_data(rd);
+	//ft->bmp = res_load_stbi(file);
+	if (!ft->bmp)
+	{
 		free(ft);
 		return NULL;
 	}
@@ -400,6 +409,64 @@ GNFONT *load_font(char *file) {
 	ft->pad = 0;
 	return ft;
 }
+#endif
+
+GNFONT *load_font(char *file, RESDATA** rd)
+{
+	GNFONT *ft = malloc(sizeof (GNFONT));
+	int i;
+	int x = 0;
+	Uint32 *b;
+	if (!ft) return NULL;
+	*rd = res_load_stbi(file, &ft->bmp);
+	if (*rd == NULL)
+	{
+	    free(ft);
+	    return NULL;
+	}
+	if (!ft->bmp)
+	{
+		free(ft);
+		return NULL;
+	}
+	//SDL_SetAlpha(ft->bmp,SDL_SRCALPHA,128);
+	b = ft->bmp->pixels;
+	//ft->bmp->format->Amask=0xFF000000;
+	//ft->bmp->format->Ashift=24;
+	//printf("shift=%d %d\n",ft->bmp->pitch,ft->bmp->w*4);
+	if (ft->bmp->format->BitsPerPixel != 32) {
+		printf("Unsupported font (bpp=%d)\n", ft->bmp->format->BitsPerPixel);
+		SDL_FreeSurface(ft->bmp);
+		free(ft);
+		return NULL;
+	}
+	ft->xpos[0] = 0;
+	for (i = 0; i < ft->bmp->w; i++) {
+		//printf("%08x\n",b[i]);
+		if (b[i] != b[0]) {
+			ft->xpos[x + 1] = i + 1;
+			if (x > 0)
+				ft->xsize[x] = i - ft->xpos[x];
+			else
+				ft->xsize[x] = i;
+			x++;
+		}
+	}
+	//printf("NB char found:%d\n",x);
+	if (x <= 0 || x > 95) return NULL;
+	/*	b=ft->bmp->pixels+ft->bmp->pitch*3;
+		for (i=0;i<ft->bmp->w;i++) {
+			//printf("%08x\n",b[i]);
+		}
+	 */
+	ft->xsize[94] = ft->bmp->w - ft->xpos[94];
+	ft->ysize = ft->bmp->h;
+
+	/* Default y padding=0 */
+	ft->pad = 0;
+	return ft;
+}
+
 
 static Uint32 string_len(GNFONT *f, char *str) {
 	int i;
@@ -513,21 +580,25 @@ static void draw_arrow(int type, int x, int y) {
 	}
 }
 
+
+RESDATA* img_res[7];
+RESDATA* font_res[2];
+  
 int gn_init_skin(void) {
 	//menu_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, 352, 256, 32, 0xFF0000, 0xFF00, 0xFF, 0x0);
 	menu_buf = SDL_CreateRGBSurface(SDL_SWSURFACE, 352, 256, 16, 0xF800, 0x7E0, 0x1F, 0);
 	//	menu_back= SDL_CreateRGBSurface(SDL_SWSURFACE, 352, 256, 32, 0xFF0000, 0xFF00, 0xFF, 0x0);
 	menu_back = SDL_CreateRGBSurface(SDL_SWSURFACE, 352, 256, 16, 0xF800, 0x7E0, 0x1F, 0);
 
-	back = res_load_stbi("skin/back.tga");
-	sfont = load_font("skin/font_small.tga");
-	mfont = load_font("skin/font_large.tga");
-	arrow_r = res_load_stbi("skin/arrow_right.tga");
-	arrow_l = res_load_stbi("skin/arrow_left.tga");
-	arrow_d = res_load_stbi("skin/arrow_down.tga");
-	arrow_u = res_load_stbi("skin/arrow_up.tga");
-	gngeo_logo = res_load_stbi("skin/gngeo.tga");
-	gngeo_mask = res_load_stbi("skin/gngeo_mask.tga");
+	sfont = load_font("skin/font_small.tga", &font_res[0]);
+	mfont = load_font("skin/font_large.tga", &font_res[1]);
+	img_res[0]  =  res_load_stbi("skin/back.tga", &back);
+	img_res[1]  = res_load_stbi("skin/arrow_right.tga", &arrow_r);
+	img_res[2]  = res_load_stbi("skin/arrow_left.tga", &arrow_l);
+	img_res[3]  = res_load_stbi("skin/arrow_down.tga", &arrow_d);
+	img_res[4]  = res_load_stbi("skin/arrow_up.tga", &arrow_u);
+	img_res[5]  = res_load_stbi("skin/gngeo.tga", &gngeo_logo);
+	img_res[6] =  res_load_stbi("skin/gngeo_mask.tga", &gngeo_mask);
 
 	pbar_logo = SDL_CreateRGBSurface(SDL_SWSURFACE, gngeo_logo->w, gngeo_logo->h, 32, 0xFF, 0xFF00, 0xFF0000, 0xFF000000);
 	SDL_SetAlpha(gngeo_logo, 0, 0);
@@ -1912,6 +1983,7 @@ Uint32 run_menu(void) {
 	return 0;
 }
 
+ 
 void free_menu()
 {
     SDL_FreeSurface(pbar_logo);   
@@ -1923,9 +1995,21 @@ void free_menu()
     free(srate_menu);
     free(yesno_menu);
     free(main_menu);
-    SDL_FreeSurface(sfont->bmp);
+    // free loaded images
+    for(int i=0; i < 7; i++)
+    {
+	if(img_res[i]->data != NULL)
+	{	    
+	    SDL_FreeSurface(img_res[i]->img);
+	    res_free_data(img_res[i]);
+	}    
+    }
+    // free loaded fonts
     SDL_FreeSurface(mfont->bmp);
+    SDL_FreeSurface(sfont->bmp);
     free(sfont);
     free(mfont);
+    res_free_data(font_res[0]);
+    res_free_data(font_res[1]);
 }
 

@@ -17,7 +17,7 @@
 #define INT16     Sint16
 #define INT32     Sint32
 #ifndef INLINE
-#define INLINE __inline__
+#define INLINE static __inline__
 #endif
 
 #define CALL_MAME_DEBUG

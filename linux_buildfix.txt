@@ -1,0 +1,6 @@
+1 - change "#define INLINE __inline__" to "#define INLINE static __inline__" in mamez80/z80.h
+
+2 - use  "-fcommon" to fix ld multiple definions errors
+
+./configure  --disable-i386asm --with-z80core=mamez80 CFLAGS="-fcommon"
+
