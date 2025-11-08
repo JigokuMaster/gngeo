@@ -271,7 +271,9 @@ void screen_change_blitter_and_effect(void) {
 	neffect = get_effect_by_name(CF_STR(cf_effect));
 //	printf("set %s %s \n", bname, ename);
 
+	printf("screen_change_blitter_and_effect\n");
 	SDL_QuitSubSystem(SDL_INIT_VIDEO);
+	printf("SDL_QuitSubSystem\n");
 
 	if ((*blitter[nblitter].init) () == SDL_FALSE) {
 		nblitter = 0;
@@ -287,7 +289,7 @@ void screen_change_blitter_and_effect(void) {
 		neffect = 0;
 		sprintf(CF_STR(cf_get_item_by_name("effect")), "none");
 	} /*else
-		snprintf(CF_STR(cf_get_item_by_name("effect")), 255, "%s", ename);
+	 	snprintf(CF_STR(cf_get_item_by_name("effect")), 255, "%s", ename);
 */
 	SDL_InitSubSystem(SDL_INIT_VIDEO);
 
@@ -298,10 +300,8 @@ void screen_change_blitter_and_effect(void) {
 	printf("CURSOR=%d\n", SDL_ShowCursor(SDL_QUERY));
 }
 
-SDL_bool screen_reinit(void) {
-
-
-
+SDL_bool screen_reinit(void) 
+{
 /*
 	if (CF_BOOL(cf_get_item_by_name("screen320"))) {
 		visible_area.x = 16;
@@ -415,6 +415,7 @@ void screen_close()
 	tmp = NULL;
     }
     SDL_FreeSurface(fontbuf);
+    fontbuf = NULL;
 }
 
 void screen_fullscreen() {

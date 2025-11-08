@@ -203,9 +203,11 @@ static CONF_ITEM * create_conf_item(const char *name, const char *help, char sho
 	int a;
 	static int val = 0x100;
 	CONF_ITEM *t = (CONF_ITEM*) calloc(1, sizeof (CONF_ITEM));
-
+	t->data.dt_array.default_array = NULL;
+	t->data.dt_array.array = NULL;
+	t->data.dt_str_array.default_array = NULL;
+	t->data.dt_str_array.array = NULL;
 	a = tolower((int) name[0]);
-
 	t->name = strdup(name);
 	t->help = strdup(help);
 	t->modified = 0;
@@ -439,7 +441,7 @@ void cf_init(void) {
 	cf_create_string_item("rompath", "Tell gngeo where your roms are", "PATH", 'i', symbian_gngeo_romsdir());
 	cf_create_string_item("biospath", "Tell gngeo where your neogeo bios is", "PATH", 'B', symbian_gngeo_biosdir());
 	cf_create_string_item("datafile", "Tell gngeo where his ressource file is", "PATH", 'd', symbian_gngeo_datafile());
-	cf_create_string_item("screenmode", "", "...", 0, "default");
+
 
 #else
 	cf_create_string_item("rompath", "Tell gngeo where your roms are", "PATH", 'i', DATA_DIRECTORY);
@@ -500,6 +502,59 @@ void cf_init(void) {
 	cf_create_string_item("frontend", "Execute CMD when exit. Usefull to return to Selector or Rage2x", "CMD", 0, "/usr/gp2x/gp2xmenu");
 #endif
 
+}
+
+
+void free_conf_item(CONF_ITEM *cf)
+{
+    if(cf->name != NULL)
+    {
+	free(cf->name);
+    }
+
+    if(cf->help != NULL)
+    {
+	free(cf->help);
+    }
+
+    if(cf->data.dt_str.default_str != NULL)
+    {
+	free(cf->data.dt_str.default_str);
+    }
+
+    if(cf->type == CFT_ARRAY)    
+    {
+	if(cf->data.dt_array.array != NULL)
+	{
+	    free(cf->data.dt_array.array);
+	}
+    }
+
+    if(cf->type == CFT_STR_ARRAY)
+    {
+	if(cf->data.dt_str_array.default_array != NULL)
+	{
+	    free(cf->data.dt_str_array.default_array);
+	}
+    }
+
+}
+
+void cf_cleanup()
+{
+    CONF_ITEM *cf;
+    int i, j;
+    for (i = 0; i < 128; i++)
+    {
+	for (j = 0; j < cf_hash[i].nb_item; j++)
+	{
+	    if((cf = cf_hash[i].conf[j]) != NULL)
+	    {
+		free_conf_item(cf);
+		free(cf);
+	    }	
+	}    
+    }
 }
 
 /* TODO: lame, do it better */

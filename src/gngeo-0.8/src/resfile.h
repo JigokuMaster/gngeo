@@ -13,8 +13,6 @@ typedef struct RESDATA
 
 ROM_DEF *res_load_drv(char *name);
 SDL_Surface *res_load_bmp(char *bmp);
-//RESDATA* res_load_bmp(char *bmp, SDL_Surface **s);
-
 void *res_load_data(char *name);
 //SDL_Surface *res_load_stbi(char *bmp);
 RESDATA* res_load_stbi(char *bmp, SDL_Surface **s);

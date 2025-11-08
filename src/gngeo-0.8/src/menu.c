@@ -901,6 +901,19 @@ GN_MENU_ITEM *gn_menu_create_item(char *name, Uint32 type,
 	return t;
 }
 
+void gn_menu_free_item(GN_MENU_ITEM *item)
+{
+
+    if(item != NULL){
+	printf("gn_menu_free_item(%s)\n", item->name);
+	free(item->name);
+	item->name = NULL;
+	free(item);
+	item = NULL;
+    }	
+}
+
+
 GN_MENU_ITEM *gn_menu_get_item_by_index(GN_MENU *gmenu, int index) {
 	GN_MENU_ITEM *gitem;
 	LIST *l = gmenu->item;
@@ -915,6 +928,7 @@ GN_MENU_ITEM *gn_menu_get_item_by_index(GN_MENU *gmenu, int index) {
 	}
 	return NULL;
 }
+
 
 int test_action(GN_MENU_ITEM *self, void *param) {
 	printf("Action!!\n");
@@ -1136,6 +1150,33 @@ GN_MENU *create_menu(char *name, int type,
 	gmenu->item = NULL;
 	return gmenu;
 }
+
+void free_menu_items(GN_MENU* menu)
+{
+    if(menu == NULL)
+	return;
+    
+    LIST* item = menu->item; 
+    LIST* tmp;
+    int i = 0;
+    printf("free_menu_items %d items in %s\n", menu->nb_elem, menu->title);
+    while((item != NULL) && (i < menu->nb_elem))
+    {
+	GN_MENU_ITEM *mi = (GN_MENU_ITEM *)item->data;
+	if(mi != NULL)
+	{
+	    gn_menu_free_item(mi);
+	}
+
+	tmp = item;	
+	item = item->next;
+	i++;
+	free(tmp);
+    }
+    free(menu);
+    menu = NULL;
+
+}    
 
 GN_MENU_ITEM *gn_menu_add_item(GN_MENU *gmenu, char *name, int type,
 		int (*action)(struct GN_MENU_ITEM *self, void *param), void *param) {
@@ -1365,7 +1406,6 @@ static int toggle_fullscreen(GN_MENU_ITEM *self, void *param) {
 	return MENU_STAY;
 }
 
-#ifdef SYMBIAN
 
 static GN_MENU *controls_menu[2] = {NULL, NULL};
 
@@ -1540,7 +1580,7 @@ static void create_controls_menu(int p_num)
 }
 
 
-
+#ifdef SYMBIAN
 static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
 {
 
@@ -1549,7 +1589,7 @@ static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
     self->val = ret;//self->val;   
     return MENU_STAY;
 }
-
+#endif
 
 static int setup_controls(GN_MENU_ITEM *self, void *param)
 {
@@ -1582,10 +1622,6 @@ static int setup_controls(GN_MENU_ITEM *self, void *param)
 	return MENU_STAY;
 }
 
-
-
-#endif
-
 static int toggle_wide(GN_MENU_ITEM *self, void *param) {
 	self->val = 1 - self->val;
 
@@ -1595,6 +1631,7 @@ static int toggle_wide(GN_MENU_ITEM *self, void *param) {
 	return MENU_STAY;
 }
 
+#ifndef SYMBIAN
 static int toggle_vsync(GN_MENU_ITEM *self, void *param) {
 
 	self->val = 1 - self->val;
@@ -1604,6 +1641,7 @@ static int toggle_vsync(GN_MENU_ITEM *self, void *param) {
 	screen_reinit();
 	return MENU_STAY;
 }
+#endif
 
 static int toggle_autoframeskip(GN_MENU_ITEM *self, void *param) {
 	self->val = 1 - self->val;
@@ -1825,6 +1863,8 @@ static int option_action(GN_MENU_ITEM *self, void *param) {
 }
 
 
+static char srate[32];
+
 void gn_init_menu(void) {
 	GN_MENU_ITEM *gitem;
 	main_menu = create_menu(NULL, MENU_BIG, NULL, NULL);
@@ -1863,6 +1903,7 @@ void gn_init_menu(void) {
 	gitem->val = symbian_ui_orientation_get();
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
+#endif	
 	gitem = gn_menu_create_item("Controls", MENU_LIST, setup_controls, NULL);
 	gitem->str = "P1";
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
@@ -1876,7 +1917,6 @@ void gn_init_menu(void) {
     	create_controls_menu(2); // P2
 	*/ 
 
-#endif	
 
 #ifndef SYMBIAN	
 	gitem = gn_menu_create_item("Fullscreen", MENU_CHECK, toggle_fullscreen, NULL);
@@ -1891,11 +1931,13 @@ void gn_init_menu(void) {
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 #endif
+#ifndef SYMBIAN 
+	// TODO: find why SDL_DOUBLEBUF crashes on Symbian.
 	gitem = gn_menu_create_item("Vsync", MENU_CHECK, toggle_vsync, NULL);
 	gitem->val = CF_BOOL(cf_get_item_by_name("vsync"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
-
+#endif
 	gitem = gn_menu_create_item("Auto Frame Skip", MENU_CHECK, toggle_autoframeskip, NULL);
 	gitem->val = CF_BOOL(cf_get_item_by_name("autoframeskip"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
@@ -1911,14 +1953,15 @@ void gn_init_menu(void) {
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 
-#ifndef SYMBIAN	
+//#ifndef SYMBIAN	
 	gitem = gn_menu_create_item("Effect", MENU_LIST, change_effect, NULL);
 	gitem->str = CF_STR(cf_get_item_by_name("effect"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
-#endif
+//#endif
 	gitem = gn_menu_create_item("Sample Rate", MENU_LIST, change_samplerate, NULL);
-	gitem->str = malloc(32);
+	gitem->str = srate;
+	//gitem->str = malloc(32);
 	if (conf.sound)
 		sprintf(gitem->str, "%d", conf.sample_rate);
 	else
@@ -1984,19 +2027,14 @@ Uint32 run_menu(void) {
 }
 
  
-void free_menu()
+void cleanup_menu()
 {
+    int i;
     SDL_FreeSurface(pbar_logo);   
     SDL_FreeSurface(menu_buf);
     SDL_FreeSurface(menu_back);
-    free(rbrowser_menu);
-    free(option_menu);
-    free(effect_menu);
-    free(srate_menu);
-    free(yesno_menu);
-    free(main_menu);
     // free loaded images
-    for(int i=0; i < 7; i++)
+    for(i=0; i < 7; i++)
     {
 	if(img_res[i]->data != NULL)
 	{	    
@@ -2011,5 +2049,16 @@ void free_menu()
     free(mfont);
     res_free_data(font_res[0]);
     res_free_data(font_res[1]);
+    gn_menu_enable_item(main_menu, "Load state");
+    gn_menu_enable_item(main_menu, "Save state");  
+    free_menu_items(main_menu);
+    gn_menu_enable_item(option_menu, "Save conf for this game");    
+    free_menu_items(option_menu);
+    free_menu_items(rbrowser_menu);
+    free_menu_items(effect_menu);
+    free_menu_items(srate_menu);
+    free_menu_items(yesno_menu);
+    free_menu_items(controls_menu[0]); // P1
+   
 }
 

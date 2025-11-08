@@ -70,6 +70,7 @@ void cf_create_int_item(const char *name,const char *help,const char *hlp_arg,ch
 void cf_create_array_item(const char *name,const char *help,const char *hlp_arg,char short_opt,int size,int *def);
 void cf_create_str_array_item(const char *name,const char *help,const char *hlp_arg,char short_opt,char *def);
 void cf_init(void);
+void cf_cleanup();
 bool cf_save_file(char *filename,int flags);
 bool cf_open_file(char *filename);
 void cf_init_cmd_line(void);

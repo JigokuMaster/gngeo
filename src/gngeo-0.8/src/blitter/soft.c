@@ -75,6 +75,8 @@ blitter_soft_init()
 
 #ifdef SYMBIAN	
 	sdl_flags = 0;
+	vsync = 0;
+	//SDL_Rect** modes = SDL_ListModes(NULL, sdl_flags | SDL_FULLSCREEN);
 	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
 	width = modes[0]->w;
 	if(width < 320)
@@ -90,8 +92,6 @@ blitter_soft_init()
 	screen_rect.y = SDL_max(0, SDL_abs(height-visible_area.h)/2); 
 	screen_rect.w = width;
 	screen_rect.h = height;
-	printf("screen resolution: %dx%d\n", width, height); 	
-	printf("neogen screen xy: %d,%d\n", screen_rect.x , screen_rect.y); 
 #endif
 
 	if (neffect!=0)	scale =1;
@@ -156,6 +156,8 @@ blitter_soft_init()
 	}
 
 #else
+	printf("screen resolution: %dx%d\n", width, height); 	
+	printf("neogen screen xy: %d,%d\n", screen_rect.x , screen_rect.y); 
 	screen = SDL_SetVideoMode(width, height, 16, sdl_flags);
 	if(screen == NULL)
 	{ 
@@ -276,18 +278,25 @@ int threaded_blit(void *buf)
 	return 0;
 }
 #endif
-#ifdef SYMBIAN
+#ifdef SYMBIANX
 void blitter_soft_update()
 {
 
     SDL_BlitSurface(buffer, &visible_area, screen, &screen_rect);
     SDL_Flip(screen);
-    
+    /*if(vsync)
+    {
+	SDL_Flip(screen);
+    }	
+    else
+    {
+	SDL_UpdateRect(screen, 0, 0, 0, 0);
+    }*/
 }
 
 #else
-void
-blitter_soft_update()
+
+void blitter_soft_update()
 {
 #ifdef GP2X
     SDL_BlitSurface(buffer, &visible_area, screen, &screen_rect);

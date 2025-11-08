@@ -91,7 +91,59 @@ ROM_DEF *res_load_drv(char *name) {
  * supported format: bmp, tga, jpeg, png, psd
  * 24&32bpp only
  */
-//SDL_Surface *
+#if 0
+SDL_Surface *res_load_stbi(char *bmp) {
+	PKZIP *pz;
+	SDL_Surface *s;
+	Uint8 * buffer;
+	unsigned int size;
+	int x, y, comp;
+	stbi_uc *data = NULL;
+
+	pz = gn_open_zip(CF_STR(cf_get_item_by_name("datafile")));
+	if (!pz)
+		return NULL;
+	buffer = gn_unzip_file_malloc(pz, bmp, 0x0, &size);
+	if (!buffer)
+		return NULL;
+
+	data = stbi_load_from_memory(buffer, size, &x, &y, &comp, 0);
+
+	printf("STBILOAD %p %d %d %d %d\n", data, x, y, comp, x * comp);
+	switch (comp) {
+#ifdef WORDS_BIGENDIAN
+	case 3:
+		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+				0xFF0000, 0xFF00, 0xFF, 0);
+		break;
+	case 4:
+		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+				0xFF000000, 0xFF0000, 0xFF00, 0xFF);
+		break;
+#else
+	case 3:
+		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+				0xFF, 0xFF00, 0xFF0000, 0);
+		break;
+	case 4:
+		s = SDL_CreateRGBSurfaceFrom((void*) data, x, y, comp * 8, x * comp,
+				0xFF, 0xFF00, 0xFF0000, 0xFF000000);
+		break;
+#endif
+	default:
+		printf("RES load STBI: Unhandled bpp surface\n");
+		s = NULL;
+		break;
+	}
+	free(buffer);
+	if (s == NULL)
+		printf("RES load STBI: Couldn't create surface\n");
+	gn_close_zip(pz);
+	return s;
+}
+
+#endif
+
 RESDATA* res_load_stbi(char *bmp, SDL_Surface **s) {
 	PKZIP *pz;
 	Uint8 * buffer;
@@ -159,6 +211,7 @@ RESDATA* res_load_stbi(char *bmp, SDL_Surface **s) {
 	rd->img = *s;
 	return rd;
 }
+
 /*
  * Load a Microsoft BMP from gngeo.dat
  * return a SDL Surface, NULL on error

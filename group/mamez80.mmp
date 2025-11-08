@@ -1,4 +1,4 @@
-OPTION GCCE -Wno-unused
+OPTION GCCE -Wno-unused -O3
 
 MACRO ASM
 MACRO HAVE_CONFIG_H

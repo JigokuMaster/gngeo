@@ -99,14 +99,15 @@ void sdl_set_title(char *name) {
 
 SDL_Surface *icon = NULL;
 
-void cleanup_gngeo()
+void gngeo_cleanup()
 {
-    free_menu();
+    cleanup_menu();
     if(icon != NULL)
     {
 	SDL_FreeSurface(icon);
     }
     screen_close(); // free buffer
+    cf_cleanup();
 }
 
 void init_sdl(void /*char *rom_name*/) {
@@ -136,10 +137,13 @@ void init_sdl(void /*char *rom_name*/) {
 	
     SDL_FillRect(buffer,NULL,SDL_MapRGB(buffer->format,0xE5,0xE5,0xE5));
 
-    fontbuf = SDL_CreateRGBSurfaceFrom(font_image.pixel_data, font_image.width, font_image.height
+    SDL_Surface* tmp = SDL_CreateRGBSurfaceFrom(font_image.pixel_data, font_image.width, font_image.height
 				       , 24, font_image.width * 3, 0xFF0000, 0xFF00, 0xFF, 0);
-    SDL_SetColorKey(fontbuf,SDL_SRCCOLORKEY,SDL_MapRGB(fontbuf->format,0xFF,0,0xFF));
-    fontbuf=SDL_DisplayFormat(fontbuf);
+
+    SDL_SetColorKey(tmp,SDL_SRCCOLORKEY,SDL_MapRGB(tmp->format,0xFF,0,0xFF));
+    fontbuf = SDL_DisplayFormat(tmp);
+    SDL_FreeSurface(tmp);
+
 #ifndef SYMBIAN    
     icon = SDL_CreateRGBSurfaceFrom(gngeo_icon.pixel_data, gngeo_icon.width,
 				    gngeo_icon.height, gngeo_icon.bytes_per_pixel*8,
@@ -209,7 +213,7 @@ int main(int argc, char *argv[])
 #endif
     if (gn_init_skin()!=SDL_TRUE)
     {
-	cleanup_gngeo();
+	gngeo_cleanup();
 	printf("Can't load skin...\n");
         exit(1);
     }    
@@ -226,7 +230,7 @@ int main(int argc, char *argv[])
 	printf("GAME %s\n",conf.game);
 	if (conf.game==NULL)
 	{
-	    cleanup_gngeo();
+	    gngeo_cleanup();
 	    SDL_Quit();
 	    return 0;
 	}
@@ -257,7 +261,7 @@ int main(int argc, char *argv[])
     }
 
     close_game();
-    cleanup_gngeo();    
+    gngeo_cleanup();    
     SDL_Quit();
     return 0;
 }

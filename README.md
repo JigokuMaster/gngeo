@@ -5,7 +5,7 @@ NeoGeo emulator for Symbian S60
 based on the original [GnGeo 0.8 ](https://github.com/linuxlinks/gngeo). built with the default SDL launcher. but it still incomplete, for now it can work only on Symbian 9 devices with physical keyboard. 
 preferably with 320x240p or  bigger screen. 
 
-first download [gngeo.sisx](https://github.com/JigokuMaster/gngeo/raw/main/sis/gngeo.sisx) 
+first download [gngeo.sisx](https://github.com/JigokuMaster/gngeo/blob/v1/sis/gngeo.sisx) 
 
 put your  roms in the c:\\gngeo\\roms
 and if you have an SD card you should put them in e:\\gngeo\\roms 

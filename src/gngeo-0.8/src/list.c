@@ -15,7 +15,7 @@ LIST *list_get_item_by_index(LIST *list,int index) {
     return NULL;
 }
 
-void list_erase_all(LIST *list,void (*erasedata)(void *data)) {
+void list_erase_all(LIST *list,void (*erasedata)(void *data)) {	
     LIST *l=list;
     do {
 	l=list->next;

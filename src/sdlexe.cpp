@@ -940,7 +940,7 @@ GLREF_C TInt E32Main()
 #ifdef USE_PARAMS_DIALOG
     exe_flags |= SDLEnv::EParamQuery;
 #endif
-    return SDLEnv::SetMain(SDL_main, CSDL::EEnableFocusStop | CSDL::EAllowImageResize, NULL, exe_flags);
+    return SDLEnv::SetMain(SDL_main, CSDL::EEnableFocusStop | /*CSDL::EImageResizeZoomOut |*/ CSDL::EAllowImageResize , NULL, exe_flags);
 }
  
 

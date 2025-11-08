@@ -36,7 +36,7 @@ sound false
 showfps false
 
 # autoframeskip control
-autoframeskip true
+autoframeskip false
 sleepidle false
 
 # enable joystick support ?
