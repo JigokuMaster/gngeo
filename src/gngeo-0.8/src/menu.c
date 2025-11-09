@@ -52,6 +52,10 @@
 #include "fileio.h"
 #include "sound.h"
 #include "effect.h"
+#ifdef SYMBIAN
+#include "symbian_s60.h"
+static char audio_vol[32];
+#endif
 
 #if defined (WII)
 #define ROOTPATH "sd:/apps/gngeo/"
@@ -103,12 +107,12 @@ static int interp;
 #define MENU_RETURNTOGAME 3
 
 
-static GN_MENU *main_menu;
-static GN_MENU *rbrowser_menu;
-static GN_MENU *option_menu;
-static GN_MENU *effect_menu;
-static GN_MENU *srate_menu;
-static GN_MENU *yesno_menu;
+static GN_MENU *main_menu = NULL;
+static GN_MENU *rbrowser_menu = NULL;
+static GN_MENU *option_menu = NULL;
+static GN_MENU *effect_menu = NULL;
+static GN_MENU *srate_menu  = NULL;
+static GN_MENU *yesno_menu  = NULL;
 
 static char *romlist[] = {
 	"2020bb",
@@ -1589,6 +1593,51 @@ static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
     self->val = ret;//self->val;   
     return MENU_STAY;
 }
+
+static int change_audio_volume(GN_MENU_ITEM *self, void *param)
+{
+    SDL_Event event;
+    int vol = symbian_audio_volume_get();
+    int old_vol = vol;
+    char* title = "Change Audio Volume";
+    char msg[100];
+    sprintf(msg, "use UP/DOWN keys");
+    reset_event();
+    draw_back();
+    draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, title);
+    draw_string(menu_buf, sfont, ALIGN_CENTER, ALIGN_CENTER, msg);
+    SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+    screen_update();
+
+    while (SDL_WaitEvent(&event))
+    {
+	if(event.type == SDL_KEYDOWN)
+	{
+	    int keycode = event.key.keysym.sym;
+	    switch (keycode)
+	    {
+		case SDLK_UP:
+		    symbian_audio_volume_set(5, 1);
+		    break;
+		case SDLK_DOWN:
+		    symbian_audio_volume_set(-5, 1);
+		    break;
+		default:
+		    return MENU_STAY;
+	    }
+
+	    // redraw
+	    sprintf(msg, "current volume %d", symbian_audio_volume_get());
+	    //sprintf(msg, "current volume %d", vol);
+	    draw_back();
+	    draw_string(menu_buf, sfont, ALIGN_CENTER, ALIGN_CENTER, msg);
+	    SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+	    screen_update();
+	}	    
+    }
+    
+    return MENU_STAY;
+}    
 #endif
 
 static int setup_controls(GN_MENU_ITEM *self, void *param)
@@ -1670,6 +1719,7 @@ static int toggle_showfps(GN_MENU_ITEM *self, void *param) {
 	return MENU_STAY;
 }
 
+#ifndef SYMBIAN
 static int change_effect_action(GN_MENU_ITEM *self, void *param) {
 	char *ename = (char *) self->arg;
 	printf("Toggle to effect %s\n", self->name);
@@ -1709,6 +1759,8 @@ if ((a = effect_menu->event_handling(effect_menu)) > 0) {
 	}
 	return 0;
 }
+#endif 
+
 
 static int change_samplerate_action(GN_MENU_ITEM *self, void *param) {
 	int rate = (int) self->arg;
@@ -1734,7 +1786,7 @@ static int change_samplerate_action(GN_MENU_ITEM *self, void *param) {
 
 	} else {
 		if (conf.sound)
-			cf_item_has_been_changed(cf_get_item_by_name("sound"));
+		    cf_item_has_been_changed(cf_get_item_by_name("sound"));
 		conf.sound = 0;
 		conf.sample_rate = 0;
 		if (conf.game) close_sdl_audio();
@@ -1864,7 +1916,6 @@ static int option_action(GN_MENU_ITEM *self, void *param) {
 
 
 static char srate[32];
-
 void gn_init_menu(void) {
 	GN_MENU_ITEM *gitem;
 	main_menu = create_menu(NULL, MENU_BIG, NULL, NULL);
@@ -1953,12 +2004,18 @@ void gn_init_menu(void) {
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 
-//#ifndef SYMBIAN	
+#ifdef SYMBIAN
+	gitem = gn_menu_create_item("Audio Volume", MENU_LIST, change_audio_volume, NULL);
+	sprintf(audio_vol, "%d", symbian_audio_volume_get());
+	gitem->str = audio_vol;
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+#else
 	gitem = gn_menu_create_item("Effect", MENU_LIST, change_effect, NULL);
 	gitem->str = CF_STR(cf_get_item_by_name("effect"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
-//#endif
+#endif
 	gitem = gn_menu_create_item("Sample Rate", MENU_LIST, change_samplerate, NULL);
 	gitem->str = srate;
 	//gitem->str = malloc(32);
@@ -1996,6 +2053,14 @@ Uint32 run_menu(void) {
 		gn_init_menu();
 	}
 
+#ifdef SYMBIAN
+	// FIX: mute audio when game is paused.
+	int current_vol = symbian_audio_volume_get();
+	if(conf.sound)
+	{
+	    symbian_audio_volume_set(0, 0);
+	}    
+#endif	
 	init_back();
 
 	reset_event();
@@ -2017,8 +2082,17 @@ Uint32 run_menu(void) {
 	while (1) {
 		main_menu->draw(main_menu); //frame_skip(0);printf("fps: %s\n",fps_str);
 		if ((a = main_menu->event_handling(main_menu)) > 0)
-			//reset_event();
-			return a;
+		{
+#ifdef SYMBIAN
+		    // reset audio volume.
+		    if(conf.sound)
+		    {
+			symbian_audio_volume_set(current_vol, 0);
+		    }    
+#endif		    
+		    //reset_event();
+		    return a;
+		}
 	}
 	//reset_event();
 	if (conf.game == NULL) return 2; /* Exit */

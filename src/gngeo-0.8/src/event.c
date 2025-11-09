@@ -10,6 +10,9 @@
 #include "conf.h"
 #include "emu.h"
 #include "memory.h"
+#ifdef SYMBIAN
+#include "symbian_s60.h"
+#endif
 
 static int get_mapid(char *butid) {
 	printf("Get mapid %s\n",butid);
@@ -41,9 +44,12 @@ static int get_mapid(char *butid) {
 }
 
 #ifdef SYMBIAN
+static int symbian_audio_volkeys_mapped = 0;
 // FIX sscanf exp: this is much faster on symbian
 bool create_joymap_from_string(int player,char *jconf)
 {
+
+	symbian_audio_volkeys_mapped = 0;
 	char *v;
 	char butid[32]={0};
 	int rc, code;
@@ -66,8 +72,13 @@ bool create_joymap_from_string(int player,char *jconf)
 	    if (rc==3 && type=='K')
 	    {
 		//printf("%s | keycode %d\n",butid, code);
-		if (code<SDLK_LAST)
+		if (code < SDLK_LAST)
 		{
+		    if(code == SDLK_HASH || code == SDLK_ASTERISK)
+		    {
+			printf("default volume keys mapped\n");
+			symbian_audio_volkeys_mapped = 1;
+		    }	
 		    jmap->key[code].player=player;
 		    jmap->key[code].map=get_mapid(butid);
 		}
@@ -98,8 +109,9 @@ bool create_joymap_from_string(int player,char *jconf) {
 	{    
 	    return false;
 	} 
-	v=strdup(jconf);
-	v=strtok(v,",");
+
+	char* tmp = strdup(jconf);
+	v = strtok(tmp,",");
 	printf("V1=%s\n",v);
 	while(v)
 	{
@@ -154,7 +166,8 @@ bool create_joymap_from_string(int player,char *jconf) {
 #endif //SDL_JOYSTICK_DISABLED
 		v=strtok(NULL,",");
 	}
-
+	
+	free(tmp);
 	return true;
 }
 #endif // SYMBIAN
@@ -246,12 +259,15 @@ int handle_pdep_event(SDL_Event *event) {
 }
 
 #elif SYMBIAN
-extern void symbian_audio_volume_set(int v, int update);
-extern int symbian_audio_volume_get();
-
+static int max_vol = 256;
 int handle_pdep_event(SDL_Event *event)
 {
 	char volbuf[21];
+	int new_vol = 0;
+	if(symbian_audio_volkeys_mapped)
+	{
+	    return 0;
+	}
 	switch (event->type)
 	{
 	    case SDL_KEYDOWN:
@@ -259,18 +275,21 @@ int handle_pdep_event(SDL_Event *event)
 		{
 		    case SDLK_ESCAPE:
 			return 1;
-			break;
 		    case SDLK_HASH:
-			if(conf.sound){
+			if(conf.sound)
+			{
 			    symbian_audio_volume_set(5, 1);
-			    sprintf(volbuf, "+%d%", symbian_audio_volume_get());
+			    new_vol = (symbian_audio_volume_get()*100)/max_vol;
+			    sprintf(volbuf, "AVOL+ %d", new_vol);
 			    draw_message(volbuf);
 			}
 			break;
 		    case SDLK_ASTERISK: 
-			if(conf.sound){
+			if(conf.sound)
+			{
 			    symbian_audio_volume_set(-5, 1);
-			    sprintf(volbuf, "-%d%", symbian_audio_volume_get());
+			    new_vol = (symbian_audio_volume_get()*100)/max_vol;
+			    sprintf(volbuf, "AVOL- %d", new_vol);
 			    draw_message(volbuf);
 			}
 		    default:

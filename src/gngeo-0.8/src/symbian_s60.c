@@ -108,7 +108,7 @@ char* symbian_gngeo_biosdir()
     return default_gngeo_romsdir;
 }
 
-char* symbian_gngeo_datafile()
+ichar* symbian_gngeo_datafile()
 {
     return gngeo_datafile;
 }

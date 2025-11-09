@@ -76,6 +76,7 @@ blitter_soft_init()
 #ifdef SYMBIAN	
 	sdl_flags = 0;
 	vsync = 0;
+	neffect = 0;
 	//SDL_Rect** modes = SDL_ListModes(NULL, sdl_flags | SDL_FULLSCREEN);
 	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
 	width = modes[0]->w;
@@ -87,11 +88,18 @@ blitter_soft_init()
 	if(height < 224)
 	{
 	    height = 224;
-	} 
+	}
+	if((width > 320) && (height > 320))
+	{
+	    width = 320;
+	    height = 240;
+	}	    
 	screen_rect.x = SDL_max(0, SDL_abs(width-visible_area.w)/2); 
 	screen_rect.y = SDL_max(0, SDL_abs(height-visible_area.h)/2); 
 	screen_rect.w = width;
 	screen_rect.h = height;
+	printf("screen resolution: %dx%d\n", width, height); 	
+	printf("neogen screen xy: %d,%d\n", screen_rect.x , screen_rect.y); 
 #endif
 
 	if (neffect!=0)	scale =1;
@@ -156,8 +164,7 @@ blitter_soft_init()
 	}
 
 #else
-	printf("screen resolution: %dx%d\n", width, height); 	
-	printf("neogen screen xy: %d,%d\n", screen_rect.x , screen_rect.y); 
+
 	screen = SDL_SetVideoMode(width, height, 16, sdl_flags);
 	if(screen == NULL)
 	{ 
@@ -169,6 +176,7 @@ blitter_soft_init()
 	if (vsync) yscreenpadding = screen_rect.y * screen->pitch;
 	//offscreen = SDL_CreateRGBSurface(SDL_HWSURFACE, 304, 224, 16, 0xF800, 0x7E0, 0x1F, 0);
 
+	//SDL_FillRect(screen, NULL, 0);
 	return SDL_TRUE;
 }
 
@@ -278,7 +286,7 @@ int threaded_blit(void *buf)
 	return 0;
 }
 #endif
-#ifdef SYMBIANX
+#ifdef SYMBIAN
 void blitter_soft_update()
 {
 

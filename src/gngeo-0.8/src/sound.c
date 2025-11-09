@@ -135,7 +135,7 @@ int init_sdl_audio(void)
     printf("Obtained sample rate: %d\n",obtain->freq);
     conf.sample_rate=obtain->freq;
 #ifdef SYMBIAN
-    //FIX: the sound very lound
+    //FIX: the sound is very lound.
     symbian_audio_volume_set(30, 0);
 #endif    
     return 1;

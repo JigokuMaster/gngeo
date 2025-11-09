@@ -13,4 +13,7 @@ char* symbian_gngeo_biosdir();
 char* symbian_gngeo_datafile();
 void symbian_audio_volume_set(int v, int update);
 int symbian_audio_volume_get();
+int symbian_ui_orientation_get();
+int symbian_ui_orientation_setup();
+
 #endif
