@@ -6,8 +6,8 @@
 #include <sys/stat.h>
 #include "symbian_s60.h"
 
-char* default_gngeo_dir = "c:\\gngeo\\";
-char* default_gngeo_romsdir = "c:\\gngeo\\roms\\";
+char* default_gngeo_dir = "C:\\gngeo\\";
+char* default_gngeo_romsdir = "C:\\gngeo\\roms\\";
 char* gngeo_datafile = NULL;
 char* symbian_private_dir = NULL;
 static int current_audio_volume = 0;

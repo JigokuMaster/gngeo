@@ -79,11 +79,12 @@ blitter_soft_init()
 	//SDL_Rect** modes = SDL_ListModes(NULL, sdl_flags | SDL_FULLSCREEN);
 	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
 	width = modes[0]->w;
+	height = modes[0]->h; 
 	if(width < 320)
 	{
 	    width = 304;
 	}    
-	height = modes[0]->h; 
+
 	if(height < 224)
 	{
 	    height = 224;
@@ -91,11 +92,8 @@ blitter_soft_init()
 
 	if((width > 320) && (height > 320))
 	{
-	    if(neffect == 0)
-	    {
-		width = 320;
-		height = 240;
-	    }
+	    width = 320;
+	    height = 240;    
 	}
 
 	if (neffect != 0)
@@ -103,6 +101,7 @@ blitter_soft_init()
 	    width*=effect[neffect].x_ratio;
 	    height*=effect[neffect].y_ratio;
 	}
+
 	screen_rect.x = SDL_max(0, SDL_abs(width-visible_area.w)/2); 
 	screen_rect.y = SDL_max(0, SDL_abs(height-visible_area.h)/2); 
 	screen_rect.w = width;

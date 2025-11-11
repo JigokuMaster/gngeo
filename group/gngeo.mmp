@@ -25,7 +25,7 @@ CAPABILITY ReadUserData WriteUserData
 USERINCLUDE  ..\src\gngeo-0.8\src ..\src\gngeo-0.8\src\ym2610
 SYSTEMINCLUDE ..\src\gngeo-0.8\src  
 SYSTEMINCLUDE \epoc32\include \epoc32\include\stdapis
-SYSTEMINCLUDE \epoc32\include\SDL \epoc32\include\SDL\inc 
+SYSTEMINCLUDE \epoc32\include\SDL \epoc32\include\SDL\
 
 SOURCEPATH ..\src
 SOURCE sdlapp.cpp
