@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
 
 #ifdef __AMIGA__
     BPTR file_lock = GetProgramDir();
-    SetProgramDir(file_lock);
+    SetProgramDir(file_lock)i;
 #endif
 #ifndef SYMBIAN
 	signal(SIGSEGV, catch_me);

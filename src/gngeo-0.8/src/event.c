@@ -278,7 +278,7 @@ int handle_pdep_event(SDL_Event *event)
 		    case SDLK_HASH:
 			if(conf.sound)
 			{
-			    symbian_audio_volume_set(5, 1);
+			    symbian_audio_volume_set(10, 1);
 			    new_vol = (symbian_audio_volume_get()*100)/max_vol;
 			    sprintf(volbuf, "AVOL+ %d", new_vol);
 			    draw_message(volbuf);
@@ -287,11 +287,16 @@ int handle_pdep_event(SDL_Event *event)
 		    case SDLK_ASTERISK: 
 			if(conf.sound)
 			{
-			    symbian_audio_volume_set(-5, 1);
+			    symbian_audio_volume_set(-10, 1);
 			    new_vol = (symbian_audio_volume_get()*100)/max_vol;
 			    sprintf(volbuf, "AVOL- %d", new_vol);
 			    draw_message(volbuf);
 			}
+			break;
+		    case SDLK_HOME:
+			take_screenshot();
+			draw_message("Screenshot saved");
+			break;
 		    default:
 			break;
 		}

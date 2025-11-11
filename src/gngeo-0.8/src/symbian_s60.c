@@ -10,6 +10,7 @@ char* default_gngeo_dir = "c:\\gngeo\\";
 char* default_gngeo_romsdir = "c:\\gngeo\\roms\\";
 char* gngeo_datafile = NULL;
 char* symbian_private_dir = NULL;
+static int current_audio_volume = 0;
 
 int init_dir(char* dir)
 {
@@ -19,7 +20,6 @@ int init_dir(char* dir)
     {
         closedir(dirptr);
     }
-
     else
     {
         mkdir(dir, 0777);
@@ -35,10 +35,10 @@ int init_dir(char* dir)
 char* init_private_dir()
 {
     char dir_buf[256];
-    sprintf(dir_buf, "e:\\private\\%s\\",  GNGEO_APP_UID);
+    sprintf(dir_buf, "E:\\private\\%s\\",  GNGEO_APP_UID);
     if( access(dir_buf, F_OK | W_OK) == -1 )
     {
-        sprintf(dir_buf, "c:\\private\\%s\\", GNGEO_APP_UID);
+        sprintf(dir_buf, "C:\\private\\%s\\", GNGEO_APP_UID);
     }
 
     return dir_buf;
@@ -61,11 +61,17 @@ void symbian_init()
 {
 
     /* better to let user manually choose all those paths*/
-    
-    if(access("e:\\", F_OK | W_OK) == 0)
+
+    /*if(access("F:\\", F_OK | W_OK) == 0)
     {
-        default_gngeo_dir = "e:\\gngeo\\";
-        default_gngeo_romsdir = "e:\\gngeo\\roms\\";
+        default_gngeo_dir = "F:\\gngeo\\";
+        default_gngeo_romsdir = "F:\\gngeo\\roms\\";
+    }*/
+    
+    if(access("E:\\", F_OK | W_OK) == 0)
+    {
+        default_gngeo_dir = "E:\\gngeo\\";
+        default_gngeo_romsdir = "E:\\gngeo\\roms\\";
     }
     
     if(init_dir(default_gngeo_dir))
@@ -78,6 +84,7 @@ void symbian_init()
     gngeo_datafile = get_private_file("gngeo_data.zip"); /* user should put it in default_gngeo_dir, if something went wrong ? */
     setenv("HOME", default_gngeo_dir, 1); 
     chdir(default_gngeo_dir); /* move to the public folder*/
+    init_dir("./screenshots");
 
     /* setup log files...*/
     int fd1 = open("stdout.log", O_WRONLY | O_CREAT | O_TRUNC);
@@ -108,26 +115,29 @@ char* symbian_gngeo_biosdir()
     return default_gngeo_romsdir;
 }
 
-ichar* symbian_gngeo_datafile()
+char* symbian_gngeo_datafile()
 {
     return gngeo_datafile;
 }
 
 void symbian_audio_volume_set(int v, int update)
 {
+    current_audio_volume = v;
     if(update)
     {
-	EPOC_SetAudioVolume(EPOC_GetAudioVolume() + v);
+	current_audio_volume = EPOC_GetAudioVolume() + v;
     }
-    else
-    {
-	EPOC_SetAudioVolume(v);
-    }
+    EPOC_SetAudioVolume(current_audio_volume);
 }
 
 int symbian_audio_volume_get()
 {
-    return EPOC_GetAudioVolume();
+    return current_audio_volume;/*EPOC_GetAudioVolume()*/;
+}
+
+void symbian_audio_mute()
+{
+    EPOC_SetAudioVolume(0);
 }
 
 int symbian_ui_orientation_get()

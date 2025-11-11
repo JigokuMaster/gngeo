@@ -441,7 +441,7 @@ void cf_init(void) {
 	cf_create_string_item("rompath", "Tell gngeo where your roms are", "PATH", 'i', symbian_gngeo_romsdir());
 	cf_create_string_item("biospath", "Tell gngeo where your neogeo bios is", "PATH", 'B', symbian_gngeo_biosdir());
 	cf_create_string_item("datafile", "Tell gngeo where his ressource file is", "PATH", 'd', symbian_gngeo_datafile());
-
+	cf_create_int_item("audio_volume", "Set Audio Volume value max 256", "v", 0, 50);
 
 #else
 	cf_create_string_item("rompath", "Tell gngeo where your roms are", "PATH", 'i', DATA_DIRECTORY);

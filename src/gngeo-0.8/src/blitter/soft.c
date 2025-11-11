@@ -72,11 +72,10 @@ blitter_soft_init()
 
 #endif
 
-
 #ifdef SYMBIAN	
 	sdl_flags = 0;
 	vsync = 0;
-	neffect = 0;
+	//neffect = 0;
 	//SDL_Rect** modes = SDL_ListModes(NULL, sdl_flags | SDL_FULLSCREEN);
 	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
 	width = modes[0]->w;
@@ -89,19 +88,28 @@ blitter_soft_init()
 	{
 	    height = 224;
 	}
+
 	if((width > 320) && (height > 320))
 	{
-	    width = 320;
-	    height = 240;
-	}	    
+	    if(neffect == 0)
+	    {
+		width = 320;
+		height = 240;
+	    }
+	}
+
+	if (neffect != 0)
+	{	    
+	    width*=effect[neffect].x_ratio;
+	    height*=effect[neffect].y_ratio;
+	}
 	screen_rect.x = SDL_max(0, SDL_abs(width-visible_area.w)/2); 
 	screen_rect.y = SDL_max(0, SDL_abs(height-visible_area.h)/2); 
 	screen_rect.w = width;
-	screen_rect.h = height;
+	screen_rect.h = height;	
 	printf("screen resolution: %dx%d\n", width, height); 	
 	printf("neogen screen xy: %d,%d\n", screen_rect.x , screen_rect.y); 
-#endif
-
+#else
 	if (neffect!=0)	scale =1;
 	if (scale == 1) {
 	    width *=effect[neffect].x_ratio;
@@ -111,7 +119,8 @@ blitter_soft_init()
 	    width *=scale;
 	    height *=scale;
 	}
-	
+#endif
+
 #ifdef PANDORA
 		
 	if (CF_BOOL(cf_get_item_by_name("wide"))) {
@@ -146,7 +155,7 @@ blitter_soft_init()
 	} else {
 		if (screen_w==240) /* ntsc */
 			screen = SDL_SetVideoMode(360, 240, 16, 
-						  sdl_flags|
+			 			  sdl_flags|
 						  (CF_BOOL(cf_get_item_by_name("vsync"))?SDL_DOUBLEBUF:0));
 		else /* pal */
 			screen = SDL_SetVideoMode(360, 288, 16, 
@@ -286,7 +295,7 @@ int threaded_blit(void *buf)
 	return 0;
 }
 #endif
-#ifdef SYMBIAN
+#ifdef SYMBIANX
 void blitter_soft_update()
 {
 

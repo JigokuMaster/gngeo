@@ -167,7 +167,8 @@ void init_neo(void) {
 	neogeo_reset();
 }
 
-static void take_screenshot(void) {
+/*static*/
+void take_screenshot(void) {
 	time_t ltime;
 	struct tm *today;
 	char buf[256];
@@ -188,12 +189,15 @@ static void take_screenshot(void) {
 #if defined (__AMIGA__)
 	strftime (date_str,100,"%Y%m%d_%H%M",today);
 	snprintf(buf,255,"%s/%s_%s.bmp","/PROGDIR/shots",conf.game,date_str);
+
+#elif defined(SYMBIAN)
+	strftime (date_str,100,"%Y%m%d_%H%M",today);
+	snprintf(buf, 255, "./screenshots/%s_%s.bmp", conf.game, date_str);
 #else
 	strftime(date_str, 100, "%a_%b_%d_%T_%Y", today);
 	snprintf(buf, 255, "%s/%s_%s.bmp", getenv("HOME"), conf.game, date_str);
 #endif
 	printf("save to %s\n", buf);
-
 	SDL_BlitSurface(buffer, &visible_area, shoot, &screen_rect);
 	SDL_SaveBMP(shoot, buf);
 }
@@ -524,7 +528,7 @@ void main_loop(void) {
 					draw_message("Reset");
 					//neogeo_init();
 					cpu_68k_reset();
-					break;
+					break;				
 					case SDLK_F2:
 					take_screenshot();
 					draw_message("Screenshot saved");

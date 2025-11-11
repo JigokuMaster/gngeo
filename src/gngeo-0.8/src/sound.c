@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include "SDL.h"
 //#include "streams.h"
+#include "conf.h" // CF_VAL
 #include "emu.h"
 #include "memory.h"
 #include "profiler.h"
@@ -136,7 +137,7 @@ int init_sdl_audio(void)
     conf.sample_rate=obtain->freq;
 #ifdef SYMBIAN
     //FIX: the sound is very lound.
-    symbian_audio_volume_set(30, 0);
+    symbian_audio_volume_set(CF_VAL(cf_get_item_by_name("audio_volume")), 0);
 #endif    
     return 1;
 }
