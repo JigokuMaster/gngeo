@@ -82,6 +82,7 @@ static SDL_Surface *gngeo_logo, *gngeo_mask, *pbar_logo;
 static SDL_Surface *arrow_l, *arrow_r, *arrow_u, *arrow_d;
 
 static int interp;
+static int menu_anim = 1;
 
 #define MENU_BIG   0
 #define MENU_SMALL 1
@@ -641,22 +642,20 @@ void gn_init_pbar(char *name, int size)
 void gn_update_pbar(int pos)
 {
     char pb_msg[255];
-    sprintf(pb_msg, "Please Wait ... %d / %d", pos ,  pbar.size);
+    sprintf(pb_msg, "Loading game ... %d/%d", pos ,  pbar.size);
     draw_back();
-	draw_string(menu_buf, sfont, MENU_TITLE_X + 50, MENU_TITLE_Y + 100, pb_msg);
-	SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
-	screen_update();
-	frame_skip(0);
-
+    draw_string(menu_buf, sfont, MENU_TITLE_X + 50, MENU_TITLE_Y + 100, pb_msg);
+    SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+    screen_update();
+    frame_skip(0);
 }
 
 void gn_terminate_pbar(void)
 {
     gn_reset_pbar();
-	SDL_BlitSurface(gngeo_logo, NULL, pbar_logo, NULL);
-	screen_update();
-	frame_skip(0);
-
+    SDL_BlitSurface(gngeo_logo, NULL, pbar_logo, NULL);
+    screen_update();
+    frame_skip(0);
 }
 
 #else
@@ -1083,12 +1082,44 @@ static int exit_action(GN_MENU_ITEM *self, void *param) {
 	return MENU_EXIT;
 }
 
+
+int menu_get_key(void)
+{
+    SDL_Event event;
+    SDL_WaitEvent(&event);
+    if(event.type == SDL_KEYDOWN)
+    {
+	switch (event.key.keysym.sym)
+	{		    
+	    case SDLK_TAB:
+		return GN_MENU_KEY;	
+	    case SDLK_UP:
+		return GN_UP;	
+	    case SDLK_DOWN:
+		return GN_DOWN;	
+	    case SDLK_LEFT:
+		return GN_LEFT;
+	    case SDLK_RIGHT:
+		return GN_RIGHT;	
+	    case SDLK_ESCAPE:
+		return GN_A;
+	    case SDLK_RETURN:
+	    case SDLK_KP_ENTER:
+		return GN_B;
+	    default:
+		break;
+	}
+    }	
+    return 0;
+}
+
+
 int menu_event_handling(struct GN_MENU *self) {
-	//static SDL_Event event;
 	GN_MENU_ITEM *mi;
 	int a;
 	LIST *l;
-	switch (wait_event()) {
+	int k = menu_anim ? wait_event() : menu_get_key();
+	switch (k) {
 		case GN_UP:
 			if (self->current > 0)
 				self->current--;
@@ -1264,18 +1295,49 @@ static int loadrom_action(GN_MENU_ITEM *self, void *param) {
 	return MENU_RETURNTOGAME;
 }
 
+static int scan_romdir()
+{
+    DIR* d = opendir(CF_STR(cf_get_item_by_name("rompath")));
+    if(d == NULL)
+    {
+	perror("opendir");
+	return -1;
+    }
+    int n = 0;
+    while(readdir(d) != NULL)
+    {
+	n++;
+    }	
+    closedir(d);
+    return n;
+}
+
 void init_rom_browser_menu(void) {
 	int i;
-	int nbf;
 	char filename[strlen(CF_STR(cf_get_item_by_name("rompath"))) + 256];
 	struct stat filestat;
-	struct dirent **namelist;
 	ROM_DEF *drv = NULL;
 	//char name[32];
-	int nb_roms = 0;
+	static int nb_roms = 0;
+	static int nb_files = 0;
+	if(rbrowser_menu != NULL)
+	{
+	    int n = scan_romdir();
+	    if(nb_files == n)
+	    {
+		//printf("re-scanning romdir not needed\n");
+		return;
+	    }
+	    nb_files = n;
+	    //printf("re-scanning romdir needed\n");
+	    free_menu_items(rbrowser_menu);
+	}
+	else
+	{
+	    nb_files = scan_romdir();
+	}
+
 	rbrowser_menu = create_menu("Load Game", MENU_SMALL, NULL, NULL);
-
-
 	i = 0;
 	while (romlist[i]) {
 		sprintf(filename, "%s/%s.zip", CF_STR(cf_get_item_by_name("rompath")), romlist[i]);
@@ -1319,21 +1381,19 @@ void init_rom_browser_menu(void) {
 	}
 }
 
-
 #ifdef SYMBIAN
 int rom_browser_menu(void) {
 	static Uint32 init = 0;
 	int a;
-
-	if (init == 0) {
-		init = 1;
+	//if (init == 0)
+	{
+		//init = 1;
 		draw_back();
 		draw_string(menu_buf, sfont, MENU_TITLE_X, MENU_TITLE_Y, "Scanning ...");
 		SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
 		screen_update();
 		frame_skip(0);
-        init_rom_browser_menu();
-
+		init_rom_browser_menu();
 	}
 
 	while (1) {
@@ -1373,9 +1433,9 @@ int rom_browser_menu(void) {
 	int a;
 	SDL_Thread *anim_th;
 
-	if (init == 0) {
-		init = 1;
-
+	//if (init == 0)
+	{
+		//init = 1;
 		scaning = 1;
 		anim_th = SDL_CreateThread(rom_browser_scanning_anim, NULL);
 		init_rom_browser_menu();
@@ -1386,7 +1446,8 @@ int rom_browser_menu(void) {
 
 	while (1) {
 		rbrowser_menu->draw(rbrowser_menu); //frame_skip(0);printf("fps: %s\n",fps_str);
-		if ((a = rbrowser_menu->event_handling(rbrowser_menu)) > 0) {
+		if ((a = rbrowser_menu->event_handling(rbrowser_menu)) > 0)
+		{
 			if (a == MENU_CLOSE)
 				return MENU_STAY;
 			else
@@ -1540,6 +1601,9 @@ static int setup_ctrlkey_action(GN_MENU_ITEM *self, void *param)
 		    sprintf(self->name, "%s", item_str);
 		    free(item_str);
 		    return MENU_STAY;
+		case SDLK_HOME:
+		    // ignore CALL/GREEN Key, used for taking screenshots
+		    break;
 		default:
 		    controls_changed = 1;
 		    sprintf(self->name, "%s K%d [%s]", keyname, keycode, SDL_GetKeyName(keycode));
@@ -1583,6 +1647,16 @@ static void create_controls_menu(int p_num)
     }
 }
 
+
+static int toggle_menu_anim(GN_MENU_ITEM *self, void *param)
+{
+    self->val = !self->val;
+    menu_anim = self->val;
+    CONF_ITEM * cf_item = cf_get_item_by_name("menu_anim");
+    CF_BOOL(cf_item) = menu_anim;
+    cf_item_has_been_changed(cf_item);   
+    return MENU_STAY;
+}
 
 #ifdef SYMBIAN
 static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
@@ -1966,7 +2040,14 @@ void gn_init_menu(void) {
 	gitem->val = symbian_ui_orientation_get();
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
+
 #endif	
+	gitem = gn_menu_create_item("Menu Animation", MENU_CHECK, toggle_menu_anim, NULL);
+	menu_anim = CF_BOOL(cf_get_item_by_name("menu_anim"));
+	gitem->val = menu_anim;
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+
 	gitem = gn_menu_create_item("Controls", MENU_LIST, setup_controls, NULL);
 	gitem->str = "P1";
 	option_menu->item = list_append(option_menu->item, (void*) gitem);

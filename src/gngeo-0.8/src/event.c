@@ -590,7 +590,8 @@ int wait_event(void) {
 	//for(i=0;i<GN_MAX_KEY;i++)
 	//	if (joy_state[0][i]) last=i;
 	//SDL_WaitEvent(&event);
-	while (SDL_PollEvent(&event)) {
+	while (SDL_PollEvent(&event)) 
+	{
 	switch (event.type) {
 	case SDL_KEYDOWN:
 		/* Some default keyboard standard key */

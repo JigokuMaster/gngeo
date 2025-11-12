@@ -103,7 +103,7 @@ static char *default_p1control = "A=J0B9,B=J0B10,C=J0B11,D=J0B12,START=J0B18,COI
 static char *default_p2control = "....";
 #elif defined(SYMBIAN)
 static char * default_p1control = "UP=K273,DOWN=K274,LEFT=K276,RIGHT=K275,A=K50,"
-		"B=K56,C=K52,D=K54,COIN=K49,START=K53";
+		"B=K56,C=K52,D=K54,COIN=K49,START=K53,START=K13";
 static char * default_p2control = "";
 #else
 	/* TODO: Make Querty default instead of azerty */
@@ -442,8 +442,9 @@ void cf_init(void) {
 	cf_create_string_item("biospath", "Tell gngeo where your neogeo bios is", "PATH", 'B', symbian_gngeo_biosdir());
 	cf_create_string_item("datafile", "Tell gngeo where his ressource file is", "PATH", 'd', symbian_gngeo_datafile());
 	cf_create_int_item("audio_volume", "Set Audio Volume value max 256", "v", 0, 50);
-
+	cf_create_bool_item("menu_anim", "Disabled/Enable menu animation", 0, false);
 #else
+	cf_create_bool_item("menu_anim", "Disabled/Enable menu animation", 0, true);
 	cf_create_string_item("rompath", "Tell gngeo where your roms are", "PATH", 'i', DATA_DIRECTORY);
 	cf_create_string_item("biospath", "Tell gngeo where your neogeo bios is", "PATH", 'B', DATA_DIRECTORY);
 	cf_create_string_item("datafile", "Tell gngeo where his ressource file is", "PATH", 'd', DATA_DIRECTORY"/gngeo_data.zip");
