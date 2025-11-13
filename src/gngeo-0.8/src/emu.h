@@ -145,10 +145,14 @@ void neogeo_reset(void);
 #endif
 
 /* LOG generation */
+#ifdef ENABLE_DEBUG_LOG
 #define GNGEO_LOG(...)
 #define DEBUG_LOG printf
 //#define GNGEO_LOG printf
-
+#else
+#define GNGEO_LOG(...)
+#define DEBUG_LOG
+#endif // ENABLE_DEBUG_LOG
 #define TRUE 1
 #define FALSE 1
 

@@ -910,7 +910,7 @@ TInt SDLUiPrint(const TDesC8& /*aInfo*/)
     return KErrNotFound;
     }
 
-extern "C" int SetupScreenOrientation()
+extern "C" const int SetupScreenOrientation()
 {
     if(gAppUi != NULL)
     {
@@ -919,7 +919,7 @@ extern "C" int SetupScreenOrientation()
     return 0;
 }
 
-extern "C" int GetScreenOrientation()
+extern "C" const int GetScreenOrientation()
 {
     if(gAppUi != NULL)
     {
@@ -927,7 +927,26 @@ extern "C" int GetScreenOrientation()
     }
     return 0;
 }
-
+#if 0
+#include <utf.h>
+extern "C" const char* GetAppPrivatePath()
+{
+    RFs& fs = CEikonEnv::Static()->FsSession();
+    TFileName pPath;  
+    TFileName name = RProcess().FileName();
+    pPath.Append(name[0]); // add drive
+    pPath.Append(':');
+    fs.PrivatePath(name); // add private/uid     
+    pPath.Append(name);
+    TInt bufLen = pPath.Length();
+    TUint8 buf[bufLen];
+    TPtr8 bufPtr(buf, bufLen);
+    bufPtr.FillZ();
+    if(CnvUtfConverter::ConvertFromUnicodeToUtf8(bufPtr, pPath) != 0)
+	return NULL;
+    return (const char*)buf;
+}
+#endif
 
 GLREF_C TInt E32Main()
 {

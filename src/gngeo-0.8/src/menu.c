@@ -1505,7 +1505,7 @@ static int apply_control_changes(char* pcontrol)
     char* controls = CF_STR(cf_get_item_by_name(pcontrol));
     char new_controls[255];
     memset(new_controls, 0, 255);
-    printf("current controls %s len: %ld\n", controls, strlen(controls));
+    //printf("current controls %s len: %ld\n", controls, strlen(controls));
     int menu_idx = (strcmp(pcontrol, "p1control")==0) ? 0:1;
     GN_MENU* menu = controls_menu[menu_idx]; 
     LIST* item = menu->item;  
@@ -1556,7 +1556,7 @@ static int apply_control_changes(char* pcontrol)
     memset(controls, 0, strlen(controls));
     strcpy(controls, new_controls);
     controls = CF_STR(cf_get_item_by_name(pcontrol));
-    printf("new controls %s len: %ld\n", controls, strlen(controls));
+    //printf("new controls %s len: %ld\n", controls, strlen(controls));
     create_joymap_from_string(1,CF_STR(cf_get_item_by_name(pcontrol)));
     return 1;
 }
@@ -1575,8 +1575,8 @@ static int setup_ctrlkey_action(GN_MENU_ITEM *self, void *param)
     char* keyname = (char*)self->arg;
     char* pcontrol = gngeo_keynames[16];   
     char* item_str = strdup(self->name); // save the original item string
-    printf("keyname: %s\n", keyname);
-    printf("pcontrol: %s\n", pcontrol); 
+    //printf("keyname: %s\n", keyname);
+    //printf("pcontrol: %s\n", pcontrol); 
     int menu_idx = (strcmp(pcontrol, "p1control")==0) ? 0:1;
     GN_MENU* menu = controls_menu[menu_idx];    
     menu->title = "press ENTER to save";
@@ -1731,7 +1731,7 @@ static int setup_controls(GN_MENU_ITEM *self, void *param)
 	int p_num = (strcmp(self->str, "P2")==0) ? 2 :1;
 	char* pcontrol = (p_num==1) ?  "p1control" : "p2control";
 	gngeo_keynames[16] = pcontrol; // set current player controls id
-	printf("pcontrol: %s\n", pcontrol);
+	//printf("pcontrol: %s\n", pcontrol);
 	int menu_idx = p_num - 1;
 	GN_MENU* menu = controls_menu[menu_idx]; 
 	while(1)
@@ -1747,7 +1747,7 @@ static int setup_controls(GN_MENU_ITEM *self, void *param)
 		    }
 		    return MENU_STAY;
 		case 2:
-		    printf("controls_changed\n");
+		    //printf("controls_changed\n");
 		    controls_changed = 1;    
 		    break;
 	    }
@@ -2220,7 +2220,7 @@ void cleanup_menu()
     res_free_data(font_res[1]);
     gn_menu_enable_item(main_menu, "Load state");
     gn_menu_enable_item(main_menu, "Save state");  
-    free_menu_items(main_menu);
+    free_menu_items(main_menu);    
     gn_menu_enable_item(option_menu, "Save conf for this game");    
     free_menu_items(option_menu);
     free_menu_items(rbrowser_menu);
@@ -2228,6 +2228,5 @@ void cleanup_menu()
     free_menu_items(srate_menu);
     free_menu_items(yesno_menu);
     free_menu_items(controls_menu[0]); // P1
-   
 }
 

@@ -20,17 +20,19 @@ clean:
 clean_linux:
 	cd  $(GNGEO_SRC_PATH) && make clean
 
-mksis:
-	cd sis && makesis -v -d$(EPOCROOT) *.pkg
 
 
 RENV_ADDR="10.42.0.231"
 APP_NAME=gngeo
-SIS_SRC=`ls sis/*_gcce.sis`
-SIS_DST=`basename sis/*_gcce.sis`
-
+SIS_SRC="sis/$(APP_NAME)_gcce.sisx"
+SIS_DST=`basename sis/$(APP_NAME)_gcce.sisx`
 EXE=$(APP_NAME).exe
 EXE_FP=$(EPOCROOT)/epoc32/release/gcce/urel/$(EXE)
+
+mksis:
+	cd sis && makesis -v -d$(EPOCROOT) $(APP_NAME)_gcce.pkg \
+	&& signsis $(APP_NAME)_gcce.sis $(APP_NAME)_gcce.sisx mycert.cer mykey.key
+
 
 depoly:
 	renv -m c -s $(RENV_ADDR)  -c "sendfile $(SIS_SRC) /data/$(SIS_DST)"

@@ -15,7 +15,7 @@
 #endif
 
 static int get_mapid(char *butid) {
-	printf("Get mapid %s\n",butid);
+	// printf("Get mapid %s\n",butid);
 	if (!strcmp(butid,"A")) return GN_A;
 	if (!strcmp(butid,"B")) return GN_B;
 	if (!strcmp(butid,"C")) return GN_C;
@@ -76,7 +76,7 @@ bool create_joymap_from_string(int player,char *jconf)
 		{
 		    if(code == SDLK_HASH || code == SDLK_ASTERISK)
 		    {
-			printf("default volume keys mapped\n");
+			//printf("default volume keys mapped\n");
 			symbian_audio_volkeys_mapped = 1;
 		    }	
 		    jmap->key[code].player=player;
@@ -263,7 +263,6 @@ static int max_vol = 256;
 int handle_pdep_event(SDL_Event *event)
 {
 	char volbuf[21];
-	int new_vol = 0;
 	if(symbian_audio_volkeys_mapped)
 	{
 	    return 0;
@@ -279,8 +278,7 @@ int handle_pdep_event(SDL_Event *event)
 			if(conf.sound)
 			{
 			    symbian_audio_volume_set(10, 1);
-			    new_vol = (symbian_audio_volume_get()*100)/max_vol;
-			    sprintf(volbuf, "AVOL+ %d", new_vol);
+			    sprintf(volbuf, "AVOL+ %d", symbian_audio_volume_get());
 			    draw_message(volbuf);
 			}
 			break;
@@ -288,8 +286,7 @@ int handle_pdep_event(SDL_Event *event)
 			if(conf.sound)
 			{
 			    symbian_audio_volume_set(-10, 1);
-			    new_vol = (symbian_audio_volume_get()*100)/max_vol;
-			    sprintf(volbuf, "AVOL- %d", new_vol);
+			    sprintf(volbuf, "AVOL- %d", symbian_audio_volume_get());
 			    draw_message(volbuf);
 			}
 			break;

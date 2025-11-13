@@ -1,6 +1,9 @@
 *.o
 data/*.zip
 sis/*.sis
+sis/*.sisx
+sis/*.cer
+sis/*.key
 *.a
 *.0
 *.Po

@@ -83,6 +83,9 @@ blitter_soft_init()
 	if(width < 320)
 	{
 	    width = 304;
+	    visible_area.w = width;
+	    visible_area.x = 24;
+	    visible_area.y = 16;
 	}    
 
 	if(height < 224)

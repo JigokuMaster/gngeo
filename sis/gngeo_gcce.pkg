@@ -10,7 +10,7 @@
 &EN
 
 ; standard SIS file header
-#{"gngeo"},(0xbe99619c),0,8,1
+#{"gngeo"},(0xbe99619c),0,9,2
 
 ;Localised Vendor name
 %{"github.com/JigokuMaster"} : "github.com/JigokuMaster"
