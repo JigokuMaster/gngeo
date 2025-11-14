@@ -49,7 +49,7 @@ use the GREEN Key to take screenshot, it will be saved in gngeo\screenshots fold
 
 ![Main](https://github.com/JigokuMaster/gngeo/raw/main/screenshots/E5_main.jpg)
 
-![PuzzleBobble](https://github.com/JigokuMaster/gngeo/raw/main/screenshots/E5_bp.jpg)
+![PuzzleBobble](https://github.com/JigokuMaster/gngeo/raw/main/screenshots/E5_pb.jpg)
 
 
 # Building
