@@ -7,8 +7,8 @@
 #include <sys/stat.h>
 #include "symbian_s60.h"
 
-char* g_symbian_gngeo_dir = "C:\\gngeo\\";
-char* g_symbian_gngeo_romsdir = "C:\\gngeo\\roms\\";
+char g_symbian_gngeo_dir[12];
+char g_symbian_gngeo_romsdir[17];
 char g_symbian_gngeo_datafile[256];
 static int max_audio_volume = 256;
 static int current_audio_volume = 0;
@@ -37,42 +37,36 @@ static void symbian_mkdir(char* dir)
     }
 }
 
-static int symbian_find_datafile()
+static int symbian_init_dirs()
 {
-    char* drive_paths[4] = {"F:\\", "E:\\", "C:\\", NULL};
+    char* drive_paths[4] = {"F:", "E:", "C:", NULL};
     int i = 0;
     char* d;
     while((d = drive_paths[i]) != NULL)
     {
-	if(access(d, F_OK | W_OK) == 0)
+	/* roms should be put in the drive where gngeo was installed */
+	sprintf(g_symbian_gngeo_datafile, "%s\\private\\%s\\gngeo_data.zip", d, GNGEO_APP_UID);
+	if(access(g_symbian_gngeo_datafile, F_OK | W_OK) == 0)
 	{
-	    sprintf(g_symbian_gngeo_datafile, "%sprivate\\%s\\gngeo_data.zip", d, GNGEO_APP_UID);
-	    if(access(g_symbian_gngeo_datafile, F_OK) == 0){
-		return 1;// found;
-	    }
+	    sprintf(g_symbian_gngeo_dir, "%s\\gngeo\\", d);
+	    sprintf(g_symbian_gngeo_romsdir, "%sroms\\", g_symbian_gngeo_dir);
+	    symbian_mkdir(g_symbian_gngeo_dir);
+	    symbian_mkdir(g_symbian_gngeo_romsdir);
+	    return 1;/*access(g_symbian_gngeo_dir, F_OK | W_OK) == 0*/;
 	}
 	i++;
     }
     return 0;
 }
 
-
 void symbian_init()
 {
-    if(access("F:\\", F_OK | W_OK) == 0)
+    if(!symbian_init_dirs())
     {
-        g_symbian_gngeo_dir = "F:\\gngeo\\";
-        g_symbian_gngeo_romsdir = "F:\\gngeo\\roms\\";
-    }
-    
-    else if(access("E:\\", F_OK | W_OK) == 0)
-    {
-        g_symbian_gngeo_dir = "E:\\gngeo\\";
-        g_symbian_gngeo_romsdir = "E:\\gngeo\\roms\\";
+	printf("Could not find gngeo path\n");
+	symbian_exit();
     }
 
-    symbian_mkdir(g_symbian_gngeo_dir);
-    symbian_mkdir(g_symbian_gngeo_romsdir);
     setenv("HOME", g_symbian_gngeo_dir, 1); 
     chdir(g_symbian_gngeo_dir);
     symbian_mkdir("./screenshots");
@@ -82,12 +76,6 @@ void symbian_init()
     int fd2 = open("sterr.log", O_WRONLY | O_CREAT | O_TRUNC);
     dup2(fd1, 1); 
     dup2(fd2, 2);
-
-    if(!symbian_find_datafile())
-    {
-	fprintf(stderr, "Could not find gngeo_data.zip\n");
-	exit(1);
-    }
     fprintf(stdout, "GNGEO_DIR=%s\n", g_symbian_gngeo_dir);
     fprintf(stdout, "GNGEO_ROMS_DIR=%s\n", g_symbian_gngeo_romsdir);
     fprintf(stdout, "GNGEO_DATAFILE=%s\n", g_symbian_gngeo_datafile);

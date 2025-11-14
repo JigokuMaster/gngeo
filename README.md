@@ -1,48 +1,93 @@
-# gngeo
+NeoGeo emulator for Symbian S60v3 and higher ( devices with physical keyboard) based on [GnGeo 0.8 ](https://github.com/linuxlinks/gngeo). 
 
-NeoGeo emulator for Symbian S60
+# Installation
 
-based on the original [GnGeo 0.8 ](https://github.com/linuxlinks/gngeo). built with the default SDL launcher. but it still incomplete, for now it can work only on Symbian 9 devices with physical keyboard. 
-preferably with 320x240p or  bigger screen. 
+* download [gngeo_gcce.sisx](https://github.com/JigokuMaster/gngeo/releases) 
 
-first download [gngeo.sisx](https://github.com/JigokuMaster/gngeo/blob/v1/sis/gngeo.sisx) 
+* you may need to install PIPS 1.7
 
-put your  roms in the c:\\gngeo\\roms
-and if you have an SD card you should put them in e:\\gngeo\\roms 
+* put your games in the drive where gngeo was installed e.g if installed in C then put them in C:\\gngeo\\roms
 
-you also need neogeo bios files. they should be inside neogeo.zip you need to put it in  the roms folder. 
+#  Notes:
 
-# Controls : 
+- if games play slow on your phone try to enable autoframeskip from option menu
 
-Neogeo             | SYMBIAN
+- the sound is disabled by default, you can enable it from samplerate option but games may run slow. 
+
+- big games needs more RAM unfortunately still no solution for devices with low memory.
+
+- GnGeo won't recognize some games,for example if you have metalslugx.zip , rename it to mslugx.zip. see [romrc](https://github.com/JigokuMaster/gngeo/blob/main/src/gngeo-0.8/romrc) for proper names.
+
+
+# Controls 
+
+Neogeo       |    SYMBIAN
 __________________________
 
-Start            :  KEY 5 or ENTER 
+Start            :     KEY 5 or ENTER 
 
-Insert Coin :  KEY 1
-
-
-A                  :  KEY 2
+Insert Coin :     KEY 1
 
 
-B                  :  KEY 8
+A                  :     KEY 2
 
 
-C                  :  KEY 4
+B                  :     KEY 8
 
 
-D                  :  KEY 6
+C                  :     KEY 4
 
 
-Joystick     :  ARROW KEYS
-
-use * or # KEY to control audio volume. 
-
-# Notes :
-- the sound is disabled by default. you can enable it from samplerate menu. but  the games will run very slow. 
-
-- you may need more RAM to play some big games , GnGeo will exit when there is no enough memory. dumpgfx might be a solution ... 
-
-- GnGeo won't recognize some games,  for example if you have metalslugx.zip , rename it to mslugx.zip. see [romrc](https://github.com/JigokuMaster/gngeo/blob/main/gngeo-0.8/romrc) for the proper name set.
+D                  :    KEY 6
 
 
+Joystick     :    ARROW KEYS
+
+use */# Keys to control audio volume. 
+
+use the GREEN Key to take screenshot, it will be saved in gngeo\screenshots folder.
+
+![Main](https://github.com/JigokuMaster/gngeo/raw/main/screenshots/E5_main.jpg)
+
+![PuzzleBobble](https://github.com/JigokuMaster/gngeo/raw/main/screenshots/E5_bp.jpg)
+
+
+# Building
+gngeo was built on linux (using gnupoc package) for ARM (GCCE) WINSCW target wasn't tested.
+
+clone/download [SDL1.2.13](https://github.com/JigokuMaster/symbian-sdl-libs) and build SDL.lib
+
+cd SDL1.2.1/symbian
+
+bldmake bldfiles
+
+abld build -v gcce urel
+
+clone/download gngeo repo 
+
+
+cd gngeo\group
+
+bldmake bldfiles
+
+abld build -v gcce urel
+
+Linux
+
+```bash
+
+cd gngeo
+
+make prebuild
+
+make build
+
+make mksis
+
+```
+
+# TO-DO:
+- Add OpenGLES support.
+- Big ROM support for low memory phones
+-  Compile without PIPS , maybe a UIQ3.1 port  ...
+- Add ROMs downloader

@@ -73,7 +73,7 @@ blitter_soft_init()
 #endif
 
 #ifdef SYMBIAN	
-	sdl_flags = 0;
+	sdl_flags = 0/*hw_surface*/;
 	vsync = 0;
 	//neffect = 0;
 	//SDL_Rect** modes = SDL_ListModes(NULL, sdl_flags | SDL_FULLSCREEN);

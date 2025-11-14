@@ -30,9 +30,10 @@ EXE=$(APP_NAME).exe
 EXE_FP=$(EPOCROOT)/epoc32/release/gcce/urel/$(EXE)
 
 mksis:
-	cd sis && makesis -v -d$(EPOCROOT) $(APP_NAME)_gcce.pkg \
-	&& signsis $(APP_NAME)_gcce.sis $(APP_NAME)_gcce.sisx mycert.cer mykey.key
+	cd sis && makesis -v -d$(EPOCROOT) $(APP_NAME)_gcce.pkg
 
+mksisx:
+	cd sis && signsis $(APP_NAME)_gcce.sis $(APP_NAME)_gcce.sisx mycert.cer mykey.key
 
 depoly:
 	renv -m c -s $(RENV_ADDR)  -c "sendfile $(SIS_SRC) /data/$(SIS_DST)"

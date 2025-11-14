@@ -1374,10 +1374,14 @@ void init_rom_browser_menu(void) {
 		i++;
 	}
 
-	if (nb_roms == 0) {
+	if (nb_roms == 0) {    
 		rbrowser_menu->item = list_append(rbrowser_menu->item,
 				(void*) gn_menu_create_item("No Games Found...", MENU_ACTION, NULL, NULL));
 		rbrowser_menu->nb_elem++;
+	
+#ifdef SYMBIAN	
+		gn_popup_info("No Games Found", "games and bios should be in %s", symbian_gngeo_romsdir());
+#endif	
 	}
 }
 
