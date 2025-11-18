@@ -31,7 +31,15 @@
 static Uint8 *z80map1, *z80map2, *z80map3, *z80map4;
 
 Uint8 mame_z80mem[0x10000];
-static Z80_STATE z80_st;
+//typedef struct Z80_STATE {
+//    Uint16 PC,SP,AF,BC,DE,HL,IX,IY;
+//    Uint16 AF2,BC2,DE2,HL2;
+//    Uint8  R,R2,IFF1,IFF2,IM,I;
+//    Uint8  IRQV,IRQL;
+//    Uint16 bank[4];
+//    Uint8  ram[0x800];
+//}Z80_STATE;
+//static Z80_STATE z80_st;
 
 #if 0
 /* Memory and port IO handler */
@@ -134,92 +142,17 @@ int mame_z80_irq_callback(int a)
     return 0;
 }
 
-//static void* mz80_context;
 
-static void pre_save_state(void) {
-    //z80_get_context(mz80_context);
-    z80_st.PC=z80_get_reg(Z80_PC);
-    z80_st.SP=z80_get_reg(Z80_SP);
-    z80_st.AF=z80_get_reg(Z80_AF);
-    z80_st.BC=z80_get_reg(Z80_BC);
-    z80_st.DE=z80_get_reg(Z80_DE);
-    z80_st.HL=z80_get_reg(Z80_HL);
-    z80_st.IX=z80_get_reg(Z80_IX);
-    z80_st.IY=z80_get_reg(Z80_IY);
+void cpu_z80_mkstate(gzFile gzf,int mode) {
 
-    z80_st.AF2=z80_get_reg(Z80_AF2);
-    z80_st.BC2=z80_get_reg(Z80_BC2);
-    z80_st.DE2=z80_get_reg(Z80_DE2);
-    z80_st.HL2=z80_get_reg(Z80_HL2);
-    
-    z80_st.IFF1=z80_get_reg(Z80_IFF1);
-    z80_st.IFF2=z80_get_reg(Z80_IFF2);
-    z80_st.IM=  z80_get_reg(Z80_IM);
-
-    memcpy(memory.z80_ram,mame_z80mem+0xf800,0x800);
-
-}
-
-static void post_load_state(void) {
-    int i;
-    //z80_set_context(mz80_context);
-    z80_set_reg(Z80_PC,z80_st.PC);
-    z80_set_reg(Z80_SP,z80_st.SP);
-    z80_set_reg(Z80_AF,z80_st.AF);
-    z80_set_reg(Z80_BC,z80_st.BC);
-    z80_set_reg(Z80_DE,z80_st.DE);
-    z80_set_reg(Z80_HL,z80_st.HL);
-    z80_set_reg(Z80_IX,z80_st.IX);
-    z80_set_reg(Z80_IY,z80_st.IY);
-
-    z80_set_reg(Z80_AF2,z80_st.AF2);
-    z80_set_reg(Z80_BC2,z80_st.BC2);
-    z80_set_reg(Z80_DE2,z80_st.DE2);
-    z80_set_reg(Z80_HL2,z80_st.HL2);
-    
-    z80_set_reg(Z80_IFF1,z80_st.IFF1);
-    z80_set_reg(Z80_IFF2,z80_st.IFF2);
-    z80_set_reg(Z80_IM,z80_st.IM);
-
-    for (i=0;i<4;i++) {
-	cpu_z80_switchbank(i,z80_bank[i]);
-    }
-    memcpy(mame_z80mem+0xf800,memory.z80_ram,0x800);
-}
-
-static void z80_init_save_state(void) {
-    /*
-      int size=z80_get_context(NULL);
-      mz80_context=(void*)malloc(size);
-    */
-    create_state_register(ST_Z80,"pc",1,(void *)&z80_st.PC,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"sp",1,(void *)&z80_st.SP,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"af",1,(void *)&z80_st.AF,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"bc",1,(void *)&z80_st.BC,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"de",1,(void *)&z80_st.DE,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"hl",1,(void *)&z80_st.HL,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"ix",1,(void *)&z80_st.IX,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"iy",1,(void *)&z80_st.IY,sizeof(Uint16),REG_UINT16);
-
-    create_state_register(ST_Z80,"af2",1,(void *)&z80_st.AF2,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"bc2",1,(void *)&z80_st.BC2,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"de2",1,(void *)&z80_st.DE2,sizeof(Uint16),REG_UINT16);
-    create_state_register(ST_Z80,"hl2",1,(void *)&z80_st.HL2,sizeof(Uint16),REG_UINT16);
-
-    create_state_register(ST_Z80,"iff1",1,(void *)&z80_st.IFF1,sizeof(Uint8),REG_UINT8);
-    create_state_register(ST_Z80,"iff2",1,(void *)&z80_st.IFF2,sizeof(Uint8),REG_UINT8);
-    create_state_register(ST_Z80,"im",1,(void *)&z80_st.IM,sizeof(Uint8),REG_UINT8);
-
-
-    create_state_register(ST_Z80,"bank",1,(void *)z80_bank,sizeof(Uint16)*4,REG_UINT16);
-    create_state_register(ST_Z80,"z80_ram",1,(void *)memory.z80_ram,sizeof(Uint8)*0x800,REG_UINT8);
-    
-    set_post_load_function(ST_Z80,post_load_state);
-    set_pre_save_function(ST_Z80,pre_save_state);
-}
-
-void cpu_z80_mkstate(gzFile *gzf,int mode) {
-	mkstate_data(gzf, &z80_st, sizeof (z80_st), mode);
+/* Old save state version was completly buggy, tried to load it anyway
+ * the size of the old struct was 2088
+ * */
+	if (state_version==ST_VER2 && mode==STREAD) {
+		Uint8 z80_st_dummy[2088];
+		mkstate_data(gzf, &z80_st_dummy, 2088, mode);
+	} else
+		mkstate_data(gzf, z80_stateData(), z80_stateDataSize, mode);
 	mkstate_data(gzf, mame_z80mem, 0x10000, mode);
 	if (mode==STREAD) {
 		int i;
@@ -234,7 +167,7 @@ void cpu_z80_init(void)
 {
     //  init_mamez80_mem();
     z80_init();
-
+    //printf("Sizeof Z80_STATE %d\n",sizeof(z80_st));
     /* bank initalisation */
     z80map1 = memory.rom.cpu_z80.p + 0x8000;
     z80map2 = memory.rom.cpu_z80.p + 0xc000;
@@ -249,7 +182,7 @@ void cpu_z80_init(void)
     memcpy(mame_z80mem, memory.rom.cpu_z80.p, 0xf800);
     z80_reset(NULL);
     z80_set_irq_callback(mame_z80_irq_callback);
-    z80_init_save_state();
+    //z80_init_save_state();
 }
 
 void cpu_z80_run(int nbcycle)

@@ -1,3 +1,5 @@
+#include "gngeo.mmh"
+
 OPTION GCCE -Wno-unused -O3 -ftracer -fstrength-reduce -funroll-loops  -fomit-frame-pointer -fstrict-aliasing -ffast-math
 MACRO   OPENC
 MACRO   SYMBIAN
@@ -58,10 +60,32 @@ SOURCE neoboot.c
 SOURCE event.c
 SOURCE stb_image.c
 SOURCE stb_zlib.c
-SOURCE generator68k_interf.c
-SOURCE mamez80_interf.c
 SOURCE Video_arm.s Memcpy.S
 
+#ifdef USE_ASM_CORES
+
+MACRO USE_CYCLONE=1
+//MACRO USE_DRZ80=1
+MACRO USE_MAMEZ80=1
+
+USERINCLUDE ..\src\gngeo-0.8\src\drz80
+USERINCLUDE ..\src\gngeo-0.8\src\cyclone
+SOURCEPATH  ..\src\gngeo-0.8\src\drz80
+//SOURCE DrZ80.s
+SOURCEPATH  ..\src\gngeo-0.8\src\cyclone
+SOURCE Cyclone.s
+
+SOURCEPATH ..\src\gngeo-0.8\src
+SOURCE cyclone_interf.c
+//SOURCE drz80_interf.c
+SOURCE mamez80_interf.c
+#else
+SOURCEPATH ..\src\gngeo-0.8\src
+SOURCE generator68k_interf.c
+SOURCE mamez80_interf.c
+MACRO USE_GENERATOR68K=1
+MACRO USE_MAMEZ80=1
+#endif
 
 SOURCEPATH ..\data
 START RESOURCE  gngeo.rss
@@ -98,9 +122,11 @@ LIBRARY flogger.lib
 
 LIBRARY libc.lib libm.lib libz.lib
 STATICLIBRARY SDL.lib
-STATICLIBRARY libgn_generator68k.lib libgn_mamez80.lib libgn_ym2610.lib
-STATICLIBRARY libgn_blitter.lib libgn_effect.lib 
-
-
+STATICLIBRARY libgn_ym2610.lib
+STATICLIBRARY libgn_blitter.lib libgn_effect.lib
+STATICLIBRARY libgn_mamez80.lib
+#ifndef USE_ASM_CORES
+STATICLIBRARY libgn_mamez80.lib libgn_generator68k.lib
+#endif
 
 

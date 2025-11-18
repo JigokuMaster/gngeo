@@ -83,6 +83,8 @@ static SDL_Surface *arrow_l, *arrow_r, *arrow_u, *arrow_d;
 
 static int interp;
 static int menu_anim = 1;
+static char z80_clock[4];
+static char m68k_clock[4];
 
 #define MENU_BIG   0
 #define MENU_SMALL 1
@@ -982,25 +984,29 @@ static int load_state_action(GN_MENU_ITEM *self, void *param) {
 		switch (wait_event()) {
 			case GN_LEFT:
 				if (slot > 0) slot--;
+				SDL_FreeSurface(slot_img);
 				slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot), menu_buf->format, SDL_SWSURFACE);
 				break;
 			case GN_RIGHT:
 				if (slot < nb_slot - 1) slot++;
+				SDL_FreeSurface(slot_img);
 				slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot), menu_buf->format, SDL_SWSURFACE);
 				break;
 			case GN_A:
+				SDL_FreeSurface(slot_img);
 				return MENU_STAY;
-				break;
 			case GN_B:
 			case GN_C:
+				SDL_FreeSurface(slot_img);
 				load_state(conf.game, slot);
 				printf("Load state!!\n");
 				return MENU_RETURNTOGAME;
-				break;
 			default:
 				break;
 		}
 	}
+
+	SDL_FreeSurface(slot_img);
 	return 0;
 }
 
@@ -1356,21 +1362,23 @@ void init_rom_browser_menu(void) {
 
 				free(drv);
 				nb_roms++;
+				i++;
+				continue;
 			}
 		}
+
 		sprintf(filename, "%s/%s.gno", CF_STR(cf_get_item_by_name("rompath")), romlist[i]);
 		if (stat(filename, &filestat) == 0 && S_ISREG(filestat.st_mode)) {
 			char *gnoname = dr_gno_romname(filename);
-			if (gnoname != NULL) {
+			if (gnoname != NULL && ((drv = res_load_drv(gnoname)) != NULL) ) {
 				rbrowser_menu->item = list_insert_sort(rbrowser_menu->item,
-						(void*) gn_menu_create_item(filename, MENU_ACTION, loadrom_action, strdup(filename)),
+						(void*) gn_menu_create_item(drv->longname, MENU_ACTION, loadrom_action, strdup(filename)),
 						romnamesort);
 				rbrowser_menu->nb_elem++;
 				nb_roms++;
+				free(drv);
 			}
 		}
-
-
 		i++;
 	}
 
@@ -1678,7 +1686,7 @@ static int change_audio_volume(GN_MENU_ITEM *self, void *param)
     int old_vol = current_vol;
     char* title = "Change Audio Volume";
     char msg[100];
-    sprintf(msg, "use UP/DOWN keys");
+    sprintf(msg, "use UP/DOWN");
     reset_event();
     draw_back();
     draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, title);
@@ -1718,6 +1726,7 @@ static int change_audio_volume(GN_MENU_ITEM *self, void *param)
 	    sprintf(msg, "current volume %d", current_vol);
 	    sprintf(self->str, "%d", current_vol);
 	    draw_back();
+	    draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, title);
 	    draw_string(menu_buf, sfont, ALIGN_CENTER, ALIGN_CENTER, msg);
 	    SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
 	    screen_update();
@@ -1930,6 +1939,68 @@ static int change_samplerate(GN_MENU_ITEM *self, void *param) {
 	return 0;
 }
 
+
+static int change_cpu_clock(GN_MENU_ITEM *self, void *param)
+{
+    SDL_Event event;
+    int old_val = (int)self->arg;
+    int current_val = old_val;
+    int is_z80 = strstr(self->name, "z80") != NULL;
+    char* title = is_z80 ? "Overclock the Z80": "Overclock the 68k";
+    char msg[100];
+    sprintf(msg, "use UP/DOWN to change the value");
+    reset_event();
+    draw_back();
+    draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, title);
+    draw_string(menu_buf, sfont, ALIGN_CENTER, ALIGN_CENTER, msg);
+    SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+    screen_update();
+
+    while (SDL_WaitEvent(&event))
+    {
+	if(event.type == SDL_KEYDOWN)
+	{
+	    int keycode = event.key.keysym.sym;
+	    switch (keycode)
+	    {
+		case SDLK_UP:
+		    current_val = SDL_min(100, current_val+1);
+		    break;
+		case SDLK_DOWN:
+		    current_val = SDL_max(0, current_val-1);
+		    break;
+		case SDLK_ESCAPE:
+		    sprintf(self->str, "%d", old_val);
+		    return MENU_STAY;
+		case SDLK_RETURN:
+		    if(current_val != old_val)
+		    {
+			char* item_name = is_z80 ? "z80clock" : "68kclock";
+			CONF_ITEM * cf_item = cf_get_item_by_name(item_name);
+			CF_VAL(cf_item) = current_val;
+			cf_item_has_been_changed(cf_item);
+			cf_save_file(NULL, 0);
+			gn_popup_info("config changed", "You must restart the emulator to apply this change.");
+		    }	
+		    return MENU_STAY;
+		default:
+		    break;
+	    }
+
+	    // redraw
+	    sprintf(msg, "current value %d, use ENTER to save the value.", current_val);
+	    sprintf(self->str, "%d", current_val);
+	    draw_back();
+	    draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, title);
+	    draw_string(menu_buf, sfont, ALIGN_CENTER, ALIGN_CENTER, msg);
+	    SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+	    screen_update();
+	}	    
+    }
+    
+    return MENU_STAY;
+} 
+
 static int save_conf_action(GN_MENU_ITEM *self, void *param) {
 	int type = (int) self->arg;
 	if (type == 0)
@@ -2126,6 +2197,20 @@ void gn_init_menu(void) {
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 
+	int z80clock_value = CF_VAL(cf_get_item_by_name("z80clock"));
+	gitem = gn_menu_create_item("z80 Clock", MENU_LIST, change_cpu_clock, (void*)z80clock_value);
+	sprintf(z80_clock, "%d", z80clock_value);
+	gitem->str = z80_clock;
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+
+	int m68kclock_value = CF_VAL(cf_get_item_by_name("68kclock"));
+	gitem = gn_menu_create_item("68k Clock", MENU_LIST, change_cpu_clock, (void*)m68kclock_value);
+	sprintf(m68k_clock, "%d", m68kclock_value);
+	gitem->str = m68k_clock;
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+
 	gitem = gn_menu_create_item("Save conf for every game", MENU_ACTION, save_conf_action, (void*) 0);
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
@@ -2232,5 +2317,6 @@ void cleanup_menu()
     free_menu_items(srate_menu);
     free_menu_items(yesno_menu);
     free_menu_items(controls_menu[0]); // P1
+    neogeo_cleanup_state();
 }
 

@@ -24,7 +24,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "SDL.h"
+#include "sound.h"
 //#include "streams.h"
 #include "conf.h" // CF_VAL
 #include "emu.h"
@@ -40,7 +40,6 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <pthread.h>
-
 #endif
 
 SDL_AudioSpec * desired, *obtain;
@@ -51,6 +50,7 @@ SDL_AudioSpec * desired, *obtain;
 //#define BUFFER_LEN 
 extern int throttle;
 static int audio_sample_rate;
+static int audio_initialized = 0;
 Uint16 play_buffer[BUFFER_LEN];
 
 #ifndef GP2X
@@ -112,9 +112,13 @@ void dummy_stream(void *userdata, Uint8 * stream, int len) {
 
 int init_sdl_audio(void)
 {
+    if(audio_initialized)
+    {
+	close_sdl_audio();
+    }
 
+    audio_initialized = 1;
     SDL_InitSubSystem(SDL_INIT_AUDIO);
-
     desired = (SDL_AudioSpec *) malloc(sizeof(SDL_AudioSpec));
     obtain = (SDL_AudioSpec *) malloc(sizeof(SDL_AudioSpec));
     audio_sample_rate = conf.sample_rate;
@@ -136,23 +140,26 @@ int init_sdl_audio(void)
     printf("Obtained sample rate: %d\n",obtain->freq);
     conf.sample_rate=obtain->freq;
 #ifdef SYMBIAN
-    //FIX: the sound is very lound.
+    //FIX: the sound is very loud.
     symbian_audio_volume_set(CF_VAL(cf_get_item_by_name("audio_volume")), 0);
 #endif    
     return 1;
 }
 
-void close_sdl_audio(void) {
+void close_sdl_audio(void)
+{
+    audio_initialized = 0;
     SDL_PauseAudio(1);
     SDL_CloseAudio();
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
-	if (desired) free(desired);
-	desired = NULL;
-	if (obtain) free(obtain);
-	obtain = NULL;
+    if (desired) free(desired);
+    desired = NULL;
+    if (obtain) free(obtain);
+    obtain = NULL;
 }
 
-void pause_audio(int on) {
+void pause_audio(int on)
+{
 	printf("PAUSE audio %d\n",on);
     SDL_PauseAudio(on);
 }

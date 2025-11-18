@@ -185,6 +185,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Define to enable cyclone */
+
 //#define USE_CYCLONE 1
 
 /* Define to enable drz80 */
@@ -192,15 +193,13 @@
 
 /* Define to enable generator68k */
 /* #undef USE_GENERATOR68K */
-#define USE_GENERATOR68K 1
-
-
+//#define USE_GENERATOR68K 1
 
 /* Define to use alternative opengl blitter */
 // #define USE_GL2 1
 
 /* Define to enable mamez80 */
-#define USE_MAMEZ80 1
+//#define USE_MAMEZ80 1
 
 /* Define to enable raze */
 /* #undef USE_RAZE */

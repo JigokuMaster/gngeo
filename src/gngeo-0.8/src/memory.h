@@ -114,30 +114,30 @@ typedef struct neo_mem {
 	Uint32 watchdog;
 } neo_mem;
 
-neo_mem memory;
+extern neo_mem memory;
 
 /* video related */
 //extern int irq2start, irq2control;
-Uint8 *current_pal;
-Uint32 *current_pc_pal;
-Uint8 *current_fix;
-Uint8 *fix_usage;
+extern Uint8 *current_pal;
+extern Uint32 *current_pc_pal;
+extern Uint8 *current_fix;
+extern Uint8 *fix_usage;
 
 /* sram */
-Uint8 sram_lock;
+extern Uint8 sram_lock;
 //Uint32 sram_protection_hack;
 //int sram_protection_hack;
 
 /* Sound control */
-Uint8 sound_code;
-Uint8 pending_command;
-Uint8 result_code;
+extern Uint8 sound_code;
+extern Uint8 pending_command;
+extern Uint8 result_code;
 
 
 /* 68k cpu Banking control */
 extern Uint32 bankaddress;		/* current bank */
 //Uint8 current_cpu_bank;
-Uint16 z80_bank[4];
+extern Uint16 z80_bank[4];
 
 /* misc utility func */
 void update_all_pal(void);
@@ -154,8 +154,6 @@ void cpu_68k_disassemble(int pc, int nb_instr);
 void cpu_68k_dumpreg(void);
 int cpu_68k_run_step(void);
 Uint32 cpu_68k_getpc(void);
-void cpu_68k_fill_state(M68K_STATE *st);
-void cpu_68k_set_state(M68K_STATE *st);
 int cpu_68k_debuger(void (*execstep)(void),void (*dump)(void));
 
 
@@ -168,8 +166,6 @@ void cpu_z80_init(void);
 void cpu_z80_switchbank(Uint8 bank, Uint16 PortNo);
 Uint8 z80_port_read(Uint16 PortNo);
 void z80_port_write(Uint16 PortNb, Uint8 Value);
-void cpu_z80_set_state(Z80_STATE *st);
-void cpu_z80_fill_state(Z80_STATE *st);
 
 /* memory handler prototype */
 void neogeo_sound_irq(int irq);
@@ -263,10 +259,10 @@ void mem68k_store_bk_kof2003_byte(Uint32 addr, Uint8 data);
 void mem68k_store_bk_kof2003_word(Uint32 addr, Uint16 data);
 void mem68k_store_bk_kof2003_long(Uint32 addr, Uint32 data);
 
-Uint8 (*mem68k_fetch_bksw_byte)(Uint32);
-Uint16 (*mem68k_fetch_bksw_word)(Uint32);
-Uint32 (*mem68k_fetch_bksw_long)(Uint32);
-void (*mem68k_store_bksw_byte)(Uint32,Uint8);
-void (*mem68k_store_bksw_word)(Uint32,Uint16);
-void (*mem68k_store_bksw_long)(Uint32,Uint32);
+extern Uint8 (*mem68k_fetch_bksw_byte)(Uint32);
+extern Uint16 (*mem68k_fetch_bksw_word)(Uint32);
+extern Uint32 (*mem68k_fetch_bksw_long)(Uint32);
+extern void (*mem68k_store_bksw_byte)(Uint32,Uint8);
+extern void (*mem68k_store_bksw_word)(Uint32,Uint16);
+extern void (*mem68k_store_bksw_long)(Uint32,Uint32);
 #endif
