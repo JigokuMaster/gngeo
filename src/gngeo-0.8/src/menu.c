@@ -951,16 +951,24 @@ static int load_state_action(GN_MENU_ITEM *self, void *param) {
 
 	Uint32 nb_slot = how_many_slot(conf.game);
 
-	if (slot>nb_slot-1)
-		slot = nb_slot-1;
-
+	if (slot>nb_slot-1){
+	    // remember the last selected slot.
+	    slot = nb_slot-1;
+	    
+	}
 	if (nb_slot == 0) {
-		gn_popup_info("Load State", "There is currently no save state available");
-		return 0; // nothing to do
+	    gn_popup_info("Load State", "There is currently no save state available");
+	    return 0; // nothing to do
 	}
 
 	//slot_img=load_state_img(conf.game,slot);
 	tmps = load_state_img(conf.game, slot);
+	if (tmps == NULL)
+	{
+	    gn_popup_info("Load State", "Failed to load state %s", slot);
+	    return 0; // nothing to do
+	}
+
 	slot_img = SDL_ConvertSurface(tmps, menu_buf->format, SDL_SWSURFACE);
 
 	while (1) {
@@ -983,30 +991,34 @@ static int load_state_action(GN_MENU_ITEM *self, void *param) {
 		frame_skip(0);
 		switch (wait_event()) {
 			case GN_LEFT:
-				if (slot > 0) slot--;
-				SDL_FreeSurface(slot_img);
-				slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot), menu_buf->format, SDL_SWSURFACE);
+				if (slot > 0){
+				    slot--;
+				    SDL_FreeSurface(slot_img);
+				    slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot), menu_buf->format, SDL_SWSURFACE);
+				}
 				break;
 			case GN_RIGHT:
-				if (slot < nb_slot - 1) slot++;
-				SDL_FreeSurface(slot_img);
-				slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot), menu_buf->format, SDL_SWSURFACE);
+				if (slot < nb_slot - 1){
+				    slot++;
+				    SDL_FreeSurface(slot_img);
+				    slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot), menu_buf->format, SDL_SWSURFACE);
+				}
 				break;
 			case GN_A:
 				SDL_FreeSurface(slot_img);
 				return MENU_STAY;
+				break;
 			case GN_B:
 			case GN_C:
 				SDL_FreeSurface(slot_img);
 				load_state(conf.game, slot);
 				printf("Load state!!\n");
 				return MENU_RETURNTOGAME;
+				break;
 			default:
 				break;
 		}
 	}
-
-	SDL_FreeSurface(slot_img);
 	return 0;
 }
 
@@ -1051,20 +1063,29 @@ static int save_state_action(GN_MENU_ITEM *self, void *param) {
 		switch (wait_event()) {
 			case GN_LEFT:
 				if (slot > 0) slot--;
-				if (slot != nb_slot) slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot),
+				if (slot != nb_slot)
+				{
+				    SDL_FreeSurface(slot_img);
+				    slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot),
 						menu_buf->format, SDL_SWSURFACE);
+				}
 				break;
 			case GN_RIGHT:
 				if (slot < nb_slot) slot++;
-				if (slot != nb_slot) slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot),
+				if (slot != nb_slot)
+				{
+				    SDL_FreeSurface(slot_img);
+				    slot_img = SDL_ConvertSurface(load_state_img(conf.game, slot),
 						menu_buf->format, SDL_SWSURFACE);
+				}
 				break;
 			case GN_A:
+				SDL_FreeSurface(slot_img);
 				return MENU_STAY;
 				break;
 			case GN_B:
 			case GN_C:
-
+				SDL_FreeSurface(slot_img);
 				save_state(conf.game, slot);
 				printf("Save state!!\n");
 				return MENU_RETURNTOGAME;

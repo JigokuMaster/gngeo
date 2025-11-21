@@ -93,16 +93,18 @@ char *file_basename(char *filename) {
 /* check if dir_name exist. Create it if not */
 bool check_dir(char *dir_name) {
     DIR *d;
-
+    bool res = true;
     if (!(d = opendir(dir_name)) && (errno == ENOENT)) {
 #ifdef WIN32
         mkdir(dir_name);
 #else
         mkdir(dir_name, 0755);
 #endif
-        return false;
+	
+        res = false;
     }
-    return true;
+    closedir(d);
+    return res;
 }
 
 /* return a char* to $HOME/.gngeo/ 
@@ -298,7 +300,7 @@ bool close_game(void) {
 bool load_game_config(char *rom_name)
 {
     char *gpath;
-    char *drconf;
+    char *drconf = NULL;
 #ifdef EMBEDDED_FS
     gpath=ROOTPATH"conf/";
 #else

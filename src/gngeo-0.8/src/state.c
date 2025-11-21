@@ -136,7 +136,7 @@ static gzFile open_state(char *game,int slot,int mode)
     sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
 
     if ((gzf = gzopen(st_name, m)) == NULL) {
-		printf("%s not found\n", st_name);
+		fprintf(stderr, "%s not found\n", st_name);
 		return NULL;
     }
 
@@ -147,15 +147,8 @@ static gzFile open_state(char *game,int slot,int mode)
 
 		memset(string, 0, 20);
 		gzread(gzf, string, 6);
-
-		/*if (strcmp(string, "GNGST2")) {
-			printf("%s is not a valid gngeo st file\n", st_name);
-			gzclose(gzf);
-			return NULL;
-		}*/
-
 		if (strcmp(string, "GNGST3")!=0 && strcmp(string, "GNGST2")!=0) {
-			printf("%s is not a valid gngeo st file\n", st_name);
+			fprintf(stderr, "%s is not a valid gngeo st file\n", st_name);
 			gzclose(gzf);
 			return NULL;
 		}
@@ -164,7 +157,7 @@ static gzFile open_state(char *game,int slot,int mode)
 		gzread(gzf, &flags, sizeof (int));
 
 		if (flags != (m68k_flag | z80_flag | endian_flag)) {
-			printf("This save state comme from a different endian architecture.\n"
+			fprintf(stderr, "This save state comme from a different endian architecture.\n"
 					"This is not currently supported :(\n");
 			gzclose(gzf);
 			return NULL;

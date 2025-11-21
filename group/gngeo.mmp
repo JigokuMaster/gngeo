@@ -124,9 +124,9 @@ LIBRARY libc.lib libm.lib libz.lib
 STATICLIBRARY SDL.lib
 STATICLIBRARY libgn_ym2610.lib
 STATICLIBRARY libgn_blitter.lib libgn_effect.lib
+#ifdef USE_ASM_CORE
 STATICLIBRARY libgn_mamez80.lib
-#ifndef USE_ASM_CORES
+#else
 STATICLIBRARY libgn_mamez80.lib libgn_generator68k.lib
 #endif
-
 
