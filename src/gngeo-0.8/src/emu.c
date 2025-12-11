@@ -55,15 +55,16 @@
 #include "menu.h"
 #include "event.h"
 
+
 int frame;
 int nb_interlace = 256;
 int current_line;
 static int arcade;
-
 extern int irq2enable, irq2start, irq2repeat, irq2control, irq2taken;
 extern int lastirq2line;
 extern int irq2repeat_limit;
 extern Uint32 irq2pos_value;
+int neo_sound_initialized = 0;
 
 void setup_misc_patch(char *name) {
 
@@ -122,28 +123,28 @@ void neogeo_reset(void) {
 
 }
 
-void init_sound(void) {
+void init_sound(void)
+{
 
-	if (conf.sound) init_sdl_audio();
+	init_sdl_audio();
 
 #ifdef ENABLE_940T
-		printf("Init all neo");
-		shared_data->sample_rate = conf.sample_rate;
-		shared_data->z80_cycle = (z80_overclk == 0 ? 73333 : 73333
+	printf("Init all neo");
+	shared_data->sample_rate = conf.sample_rate;
+	shared_data->z80_cycle = (z80_overclk == 0 ? 73333 : 73333
 				+ (z80_overclk * 73333 / 100.0));
-		//gp2x_add_job940(JOB940_INITALL);
-		gp2x_add_job940(JOB940_INITALL);
-		wait_busy_940(JOB940_INITALL);
-		printf("The YM2610 have been initialized\n");
+	//gp2x_add_job940(JOB940_INITALL);
+	gp2x_add_job940(JOB940_INITALL);
+	wait_busy_940(JOB940_INITALL);
+	printf("The YM2610 have been initialized\n");
 #else
-		cpu_z80_init();
-		//streams_sh_start();
-		YM2610_sh_start();
+	cpu_z80_init();
+	//streams_sh_start();
+	YM2610_sh_start();
 #endif
-	if (conf.sound)	pause_audio(0);
-		conf.snd_st_reg_create = 1;
-
-
+	pause_audio(0);
+	conf.snd_st_reg_create = 1;
+	neo_sound_initialized = 1;
 }
 
 void init_neo(void) {
@@ -162,7 +163,7 @@ void init_neo(void) {
 	pd4990a_init();
 //	setup_misc_patch(rom_name);
 
-	init_sound();
+	if(conf.sound) init_sound();
 
 	neogeo_reset();
 }
@@ -630,7 +631,7 @@ void main_loop(void) {
 			SDL_Delay(100);
 
 #ifndef ENABLE_940T
-		if (conf.sound) {
+		if (neo_sound_initialized && conf.sound) {
 			PROFILER_START(PROF_Z80);
 
 			for (i = 0; i < nb_interlace; i++) {
@@ -645,7 +646,7 @@ void main_loop(void) {
 		 my_timer();*/
 #endif
 #ifdef ENABLE_940T
-		if (conf.sound) {
+		if (neo_sound_initialized && conf.sound) {
 			PROFILER_START(PROF_Z80);
 			wait_busy_940(JOB940_RUN_Z80);
 #if 0

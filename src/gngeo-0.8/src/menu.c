@@ -1129,6 +1129,7 @@ int menu_get_key(void)
 	    case SDLK_RIGHT:
 		return GN_RIGHT;	
 	    case SDLK_ESCAPE:
+	    case SDLK_BACKSPACE:
 		return GN_A;
 	    case SDLK_RETURN:
 	    case SDLK_KP_ENTER:
@@ -1399,6 +1400,7 @@ void init_rom_browser_menu(void) {
 				nb_roms++;
 				free(drv);
 			}
+			free(gnoname);
 		}
 		i++;
 	}
@@ -1630,6 +1632,7 @@ static int setup_ctrlkey_action(GN_MENU_ITEM *self, void *param)
 		    }		
 		    return MENU_STAY;	
 		case SDLK_ESCAPE:
+		case SDLK_BACKSPACE:
 		    //reset original item string
 		    sprintf(self->name, "%s", item_str);
 		    free(item_str);
@@ -1882,6 +1885,7 @@ if ((a = effect_menu->event_handling(effect_menu)) > 0) {
 	return 0;
 }
 
+extern int neo_sound_initialized;
 static int change_samplerate_action(GN_MENU_ITEM *self, void *param) {
 	int rate = (int) self->arg;
 
@@ -1898,6 +1902,12 @@ static int change_samplerate_action(GN_MENU_ITEM *self, void *param) {
 		conf.sample_rate = rate;
 		//init_sdl_audio();
 		//YM2610ChangeSamplerate(conf.sample_rate);
+		if(!neo_sound_initialized)
+		{
+		    gn_popup_info("config changed", "Please reload the game.");
+		    return MENU_CLOSE;
+		}
+
 		if (conf.game) {
 			init_sdl_audio();
 			YM2610ChangeSamplerate(conf.sample_rate);
@@ -1991,6 +2001,7 @@ static int change_cpu_clock(GN_MENU_ITEM *self, void *param)
 		    current_val = SDL_max(0, current_val-1);
 		    break;
 		case SDLK_ESCAPE:
+		case SDLK_BACKSPACE:
 		    sprintf(self->str, "%d", old_val);
 		    return MENU_STAY;
 		case SDLK_RETURN:

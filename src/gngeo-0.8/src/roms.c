@@ -902,7 +902,7 @@ static int allocate_region(ROM_REGION *r, Uint32 size, int region) {
 			/* TODO: Be more permissive, allow at least a dump */
 			printf("Not enough memory :( exiting\n");
 			exit(1);
-			return 1;
+			return 1;			
 		}
 		memset(r->p, 0, size);
 	} else
@@ -914,7 +914,16 @@ static int allocate_region(ROM_REGION *r, Uint32 size, int region) {
 static void free_region(ROM_REGION *r) {
 	DEBUG_LOG("Free Region %p %p %d\n", r, r->p, r->size);
 	if (r->p)
+	{
+#ifdef USE_MMF
+	    if(!mmf_free(r->p))
+	    {
 		free(r->p);
+	    }
+#else		
+	    free(r->p);
+#endif		
+	}
 	r->size = 0;
 	r->p = NULL;
 }
@@ -1668,18 +1677,23 @@ int dr_save_gno(GAME_ROMS *r, char *filename) {
 }
 
 int read_region(FILE *gno, GAME_ROMS *roms) {
+	static int totalloc = 0;
 	Uint32 size;
 	Uint8 lid, type;
 	ROM_REGION *r = NULL;
 	size_t totread = 0;
+#ifdef SYMBIAN
+	// cache_size less than 6MB is pretty slow on Symbian...
+	Uint32 cache_size[] = {8, 6, 0};
+#else	
 	Uint32 cache_size[] = {64, 32, 24, 16, 8, 6, 4, 2, 1, 0};
+#endif
 	int i = 0;
 
 	/* Read region header */
 	totread = fread(&size, sizeof (Uint32), 1, gno);
 	totread += fread(&lid, sizeof (Uint8), 1, gno);
-	totread += fread(&type, sizeof (Uint8), 1, gno);
-
+	totread += fread(&type, sizeof (Uint8), 1, gno);	
 	switch (lid) {
 		case REGION_MAIN_CPU_CARTRIDGE:
 			r = &roms->cpu_m68k;
@@ -1716,21 +1730,27 @@ int read_region(FILE *gno, GAME_ROMS *roms) {
 	}
 
 	printf("Read region %d %08X type %d\n", lid, size, type);
-	if (type == 0) {
-		/* TODO: Support ADPCM streaming for platform with less that 64MB of Mem */
-		allocate_region(r, size, lid);
-		printf("Load %d %08x\n", lid, r->size);
-		totread += fread(r->p, r->size, 1, gno);
+	if (type == 0)
+	{
+		if((!conf.sound) && (lid == REGION_AUDIO_DATA_1 || lid == REGION_AUDIO_DATA_2))
+		{
+		    printf("Skip region size=%ld\n", size + r->size);    
+		    fseek(gno, size, SEEK_CUR);
+		}
+		else{
+		    totalloc += size;
+		    /* TODO: Support ADPCM streaming for platform with less that 64MB of Mem */
+		    allocate_region(r, size, lid);
+		    printf("Load %d %08x\n", lid, r->size);		
+		    totread += fread(r->p, r->size, 1, gno);
+		}
 	} else {
 		Uint32 nb_block, block_size;
 		Uint32 cmp_size;
 		totread += fread(&block_size, sizeof (Uint32), 1, gno);
 		nb_block = size / block_size;
-
 		printf("Region size=%08X\n", size);
 		r->size = size;
-
-
 		memory.vid.spr_cache.offset = malloc(sizeof (Uint32) * nb_block);
 		totread += fread(memory.vid.spr_cache.offset, sizeof (Uint32), nb_block, gno);
 		memory.vid.spr_cache.gno = gno;
@@ -1738,15 +1758,17 @@ int read_region(FILE *gno, GAME_ROMS *roms) {
 		totread += fread(&cmp_size, sizeof (Uint32), 1, gno);
 
 		fseek(gno, cmp_size, SEEK_CUR);
-
 		/* TODO: Find the best cache size dynamically! */
 		for (i = 0; cache_size[i] != 0; i++) {
 			if (init_sprite_cache(cache_size[i]*1024 * 1024, block_size) == 0) {
+				totalloc += (cache_size[i]*1024 * 1024);
 				printf("Cache size=%dMB\n", cache_size[i]);
 				break;
 			}
 		}
 	}
+
+	printf("Total Allocation %d\n", totalloc);
 	return TRUE;
 }
 
@@ -1833,6 +1855,11 @@ char *dr_gno_romname(char *filename) {
 	}
 
 	totread += fread(name, 8, 1, gno);
+	// Remove space that could break res_load_drv() from finding the rom driver.
+	char* space_ptr = strchr(name, ' ');
+	if(space_ptr != NULL){
+	    *space_ptr = '\0';
+	}
 	fclose(gno);
 	return strdup(name);
 }
@@ -1855,7 +1882,7 @@ void dr_free_roms(GAME_ROMS *r) {
 
 	if (!memory.vid.spr_cache.data) {
 		printf("Free tiles\n");
-		free_region(&r->tiles);
+		free_region(&r->tiles);	
 	} else {
 		fclose(memory.vid.spr_cache.gno);
 		free_sprite_cache();
@@ -1878,13 +1905,10 @@ void dr_free_roms(GAME_ROMS *r) {
 
 	free_region(&r->bios_m68k);
 	free_region(&r->bios_sfix);
-
 	free(memory.ng_lo);
 	free(memory.fix_game_usage);
 	free_region(&r->spr_usage);
-
 	free(r->info.name);
 	free(r->info.longname);
-
 	conf.game = NULL;
 }

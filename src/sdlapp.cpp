@@ -959,8 +959,8 @@ GLREF_C TInt E32Main()
     exe_flags |= SDLEnv::EParamQuery;
 #endif
     return SDLEnv::SetMain(SDL_main, CSDL::EEnableFocusStop
-	    | CSDL::EAllowImageResize /*| CSDL::EImageResizeZoomOut
-	    | CSDL::EAllowImageResizeKeepRatio*/ , NULL, exe_flags);
+	    | CSDL::EAllowImageResize | CSDL::EImageResizeZoomOut
+	    | CSDL::EAllowImageResizeKeepRatio , NULL, exe_flags);
 }
  
 

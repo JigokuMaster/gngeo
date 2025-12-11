@@ -354,16 +354,18 @@ bool load_game_config(char *rom_name)
 }
 
 bool init_game(char *rom_name) {
-printf("AAA Blitter %s effect %s\n",CF_STR(cf_get_item_by_name("blitter")),CF_STR(cf_get_item_by_name("effect")));
 
-	load_game_config(rom_name);
-	/* reinit screen if necessary */
-	//screen_change_blitter_and_effect(NULL,NULL);
-	reset_frame_skip();
-	#ifndef SYMBIAN
-	screen_reinit();
-	#endif
-	printf("BBB Blitter %s effect %s\n",CF_STR(cf_get_item_by_name("blitter")),CF_STR(cf_get_item_by_name("effect")));
+    printf("AAA Blitter %s effect %s\n",CF_STR(cf_get_item_by_name("blitter")),CF_STR(cf_get_item_by_name("effect")));
+
+    load_game_config(rom_name);
+    /* reinit screen if necessary */
+    //screen_change_blitter_and_effect(NULL,NULL);
+    reset_frame_skip();
+#ifndef SYMBIAN
+    screen_reinit();
+#endif
+
+    printf("BBB Blitter %s effect %s\n",CF_STR(cf_get_item_by_name("blitter")),CF_STR(cf_get_item_by_name("effect")));
     /* open transpack if need */
     trans_pack_open(CF_STR(cf_get_item_by_name("transpack")));
 
@@ -392,15 +394,11 @@ printf("AAA Blitter %s effect %s\n",CF_STR(cf_get_item_by_name("blitter")),CF_ST
 #endif
     init_neo();
     setup_misc_patch(conf.game);
-
     fix_usage = memory.fix_board_usage;
     current_pal = memory.vid.pal_neo[0];
     current_fix = memory.rom.bios_sfix.p;
     current_pc_pal = (Uint32 *) memory.vid.pal_host[0];
-
-	memory.vid.currentpal=0;
-	memory.vid.currentfix=0;
-
-
+    memory.vid.currentpal=0;
+    memory.vid.currentfix=0;
     return true;
 }

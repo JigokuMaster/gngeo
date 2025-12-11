@@ -273,6 +273,7 @@ int handle_pdep_event(SDL_Event *event)
 		switch (event->key.keysym.sym)
 		{
 		    case SDLK_ESCAPE:
+		    case SDLK_BACKSPACE:
 			return 1;
 		    case SDLK_HASH:
 			if(conf.sound)
@@ -311,6 +312,7 @@ int handle_pdep_event(SDL_Event *event) {
 	case SDL_KEYDOWN:
 		switch (event->key.keysym.sym) {
 		case SDLK_ESCAPE:
+		case SDLK_BACKSPACE:
 			return 1;
 			break;
 		case SDLK_F12:
@@ -619,6 +621,7 @@ int wait_event(void) {
 			//return GN_RIGHT;
 			break;	
 		case SDLK_ESCAPE:
+		case SDLK_BACKSPACE:
 			joy_state[0][GN_A]=1;
 			//last=GN_A;
 			//return GN_A;

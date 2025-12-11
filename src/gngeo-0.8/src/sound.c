@@ -160,8 +160,8 @@ void close_sdl_audio(void)
 
 void pause_audio(int on)
 {
-	printf("PAUSE audio %d\n",on);
-    SDL_PauseAudio(on);
+    printf("PAUSE audio %d\n",on);
+    if(audio_initialized) SDL_PauseAudio(on);
 }
 
 #else

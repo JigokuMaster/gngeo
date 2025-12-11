@@ -61,6 +61,7 @@ static int symbian_init_dirs()
 
 void symbian_init()
 {
+
     if(!symbian_init_dirs())
     {
 	printf("Could not find gngeo path\n");
@@ -68,14 +69,13 @@ void symbian_init()
     }
 
     setenv("HOME", g_symbian_gngeo_dir, 1); 
-    chdir(g_symbian_gngeo_dir);
+    chdir(g_symbian_gngeo_dir);    
     symbian_mkdir("./screenshots");
-
     /* setup log files...*/
     int fd1 = open("stdout.log", O_WRONLY | O_CREAT | O_TRUNC);
     int fd2 = open("sterr.log", O_WRONLY | O_CREAT | O_TRUNC);
     dup2(fd1, 1); 
-    dup2(fd2, 2);
+    dup2(fd1, 2);
     fprintf(stdout, "GNGEO_DIR=%s\n", g_symbian_gngeo_dir);
     fprintf(stdout, "GNGEO_ROMS_DIR=%s\n", g_symbian_gngeo_romsdir);
     fprintf(stdout, "GNGEO_DATAFILE=%s\n", g_symbian_gngeo_datafile);

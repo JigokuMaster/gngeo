@@ -45,6 +45,13 @@ run:
 run_linux:
 	cd  $(GNGEO_SRC_PATH)/src && ./gngeo --datafile=../gngeo.dat/gngeo_data.zip --blitter=soft
 
+#HEAP_SIZE = 27000000 # 25MB
+#HEAP_SIZE = 20240000 # 10MB
+HEAP_SIZE = 32115244
+lrun_linux:
+	cd  $(GNGEO_SRC_PATH)/src && prlimit --data=$(HEAP_SIZE) \
+	./gngeo --datafile=../gngeo.dat/gngeo_data.zip --blitter=soft
+
 
 drun_linux:
 	cd  $(GNGEO_SRC_PATH)/src && valgrind -s --leak-check=full --show-leak-kinds=all \
