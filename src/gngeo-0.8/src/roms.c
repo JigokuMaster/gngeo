@@ -1677,7 +1677,7 @@ int dr_save_gno(GAME_ROMS *r, char *filename) {
 }
 
 int read_region(FILE *gno, GAME_ROMS *roms) {
-	static int totalloc = 0;
+	static size_t totalloc = 0;
 	Uint32 size;
 	Uint8 lid, type;
 	ROM_REGION *r = NULL;
@@ -1734,7 +1734,7 @@ int read_region(FILE *gno, GAME_ROMS *roms) {
 	{
 		if((!conf.sound) && (lid == REGION_AUDIO_DATA_1 || lid == REGION_AUDIO_DATA_2))
 		{
-		    printf("Skip region size=%ld\n", size + r->size);    
+		    printf("Skip region size=%d\n", (size + r->size));    
 		    fseek(gno, size, SEEK_CUR);
 		}
 		else{
@@ -1768,7 +1768,7 @@ int read_region(FILE *gno, GAME_ROMS *roms) {
 		}
 	}
 
-	printf("Total Allocation %d\n", totalloc);
+	printf("Total allocs %ldB\n", totalloc);
 	return TRUE;
 }
 

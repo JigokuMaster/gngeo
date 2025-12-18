@@ -1529,23 +1529,18 @@ static char* gngeo_keynames[] = {
     "pNcontrol"
 };
 
-static int change_screenmode(GN_MENU_ITEM *self, void *param)
-{
-
-	return 0;
-}
-
 static int apply_control_changes(char* pcontrol)
 {
     char* controls = CF_STR(cf_get_item_by_name(pcontrol));
-    char new_controls[255];
-    memset(new_controls, 0, 255);
+    /* 255 bytes see CONF_ITEM.data.str in conf.h */
+    char new_controls[255] = {0,};
     //printf("current controls %s len: %ld\n", controls, strlen(controls));
     int menu_idx = (strcmp(pcontrol, "p1control")==0) ? 0:1;
     GN_MENU* menu = controls_menu[menu_idx]; 
     LIST* item = menu->item;  
     int i = 0;
     int ret = 1;
+    /* parsing menu items of Controls option. */
     while((item != NULL) && (i < menu->nb_elem))
     {
 	 
@@ -1561,6 +1556,7 @@ static int apply_control_changes(char* pcontrol)
 	    return 0;
 	}
 
+	/* MENU item: GN_BUTTON Kcode [KEYNAME] */
 	char* sep1 = strchr(item_str, ' ');
 	if(sep1 == NULL)
 	{
@@ -1568,19 +1564,23 @@ static int apply_control_changes(char* pcontrol)
 	    return 0;
 	}
 
+	/* GN_BUTTON=Kcode[KEYNAME] */
 	*sep1 = '=';
-	char* sep2 = strchr(item_str, '[');
+	/* find []*/
+	char* sep2 = strchr(item_str, '['); 
 	if(sep2 == NULL)
 	{
 	    free(item_str);
 	    return 0;
 	}
-	sep2--; // space
-	*sep2 = '\0';
 
+	sep2--; // space before []
+	*sep2 = '\0';
+	/* GN_BUTTON=Kcode */
 	strcat(new_controls, item_str);
 	if(i < (menu->nb_elem)-1)
-	{    
+	{
+	    /* GN_BUTTON=Kcode,*/
 	    strcat(new_controls, ",");
 	}  	
 	item = item->next;
@@ -1588,10 +1588,10 @@ static int apply_control_changes(char* pcontrol)
 	free(item_str);
     }
 
-    memset(controls, 0, strlen(controls));
+    memset(controls, 0, 255);
     strcpy(controls, new_controls);
-    controls = CF_STR(cf_get_item_by_name(pcontrol));
-    //printf("new controls %s len: %ld\n", controls, strlen(controls));
+    // controls = CF_STR(cf_get_item_by_name(pcontrol));
+    // printf("new controls %s len: %ld\n", controls, strlen(controls));
     create_joymap_from_string(1,CF_STR(cf_get_item_by_name(pcontrol)));
     return 1;
 }
@@ -1675,8 +1675,6 @@ static void create_controls_menu(int p_num)
 	{
 	    continue;
 	}
-   
-	//sprintf(control, "%s %s", keynames[k], SDL_GetKeyName(i-1)); // why i-1 ?
 	sprintf(control, "%s K%d [%s]", gngeo_keynames[k], i-1, SDL_GetKeyName(i-1));
 	menu->item = list_append(menu->item,(void*) gn_menu_create_item(control, MENU_ACTION, setup_ctrlkey_action, (void*)gngeo_keynames[k]));
 	menu->nb_elem++;

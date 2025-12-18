@@ -525,12 +525,17 @@ void CSDLAppUi::ConstructL()
  	
  	iSDLWin = new (ELeave) CSDLWin;
  	iSDLWin->ConstructL(ApplicationRect());
- 	iSdl = CSDL::NewL(gSDLClass.SdlFlags());
+	if((ApplicationRect().Width() > 320) && (ApplicationRect().Height() > 320)){
+	    iSdl = CSDL::NewL(gSDLClass.SdlFlags() | CSDL::EImageResizeZoomOut | CSDL::EAllowImageResizeKeepRatio);
+	}
+	else{
+	    iSdl = CSDL::NewL(gSDLClass.SdlFlags());
+	}
  	gSDLClass.SendEvent(MSDLMainObs::ESDLCreated, 0, iSdl);	
  	iSdl->SetObserver(this);
  	iSdl->DisableKeyBlocking(*this);
  	iSdl->SetContainerWindowL(
- 					iSDLWin->GetWindow(), 
+ 				iSDLWin->GetWindow(), 
         			iEikonEnv->WsSession(),
         			*iEikonEnv->ScreenDevice());
 #ifdef USE_VIRTUALMOUSE
@@ -958,9 +963,7 @@ GLREF_C TInt E32Main()
 #ifdef USE_PARAMS_DIALOG
     exe_flags |= SDLEnv::EParamQuery;
 #endif
-    return SDLEnv::SetMain(SDL_main, CSDL::EEnableFocusStop
-	    | CSDL::EAllowImageResize | CSDL::EImageResizeZoomOut
-	    | CSDL::EAllowImageResizeKeepRatio , NULL, exe_flags);
+    return SDLEnv::SetMain(SDL_main, CSDL::EEnableFocusStop | CSDL::EAllowImageResize, NULL, exe_flags);
 }
  
 

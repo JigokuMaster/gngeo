@@ -22,10 +22,8 @@ clean_linux:
 
 
 
-RENV_ADDR="10.42.0.231"
 APP_NAME=gngeo
-SIS_SRC="sis/$(APP_NAME)_gcce.sisx"
-SIS_DST=`basename sis/$(APP_NAME)_gcce.sisx`
+SIS_FP="sis/$(APP_NAME)_gcce.sisx"
 EXE=$(APP_NAME).exe
 EXE_FP=$(EPOCROOT)/epoc32/release/gcce/urel/$(EXE)
 
@@ -36,22 +34,20 @@ mksisx:
 	cd sis && signsis $(APP_NAME)_gcce.sis $(APP_NAME)_gcce.sisx mycert.cer mykey.key
 
 depoly:
-	renv -m c -s $(RENV_ADDR)  -c "sendfile $(SIS_SRC) /data/$(SIS_DST)"
+	renv_send "$(SIS_FP)"
 run:
-	renv -m c -s $(RENV_ADDR) -c "sendfile $(EXE_FP) D:\\$(EXE)"
-	renv -m c -s $(RENV_ADDR) -c "copyfile D:\\$(EXE) C:\\sys\\bin\\$(EXE)"
-	renv -m c -s $(RENV_ADDR) -c "runexe $(EXE) 0 1"
+	renv_install "$(EXE_FP)" -r
+
+#HEAP_SIZE = 27000000 # 25MB
+#HEAP_SIZE = 20240000 # 10MB
+HEAP_SIZE = 32115244 # 30MB
 
 run_linux:
 	cd  $(GNGEO_SRC_PATH)/src && ./gngeo --datafile=../gngeo.dat/gngeo_data.zip --blitter=soft
 
-#HEAP_SIZE = 27000000 # 25MB
-#HEAP_SIZE = 20240000 # 10MB
-HEAP_SIZE = 32115244
 lrun_linux:
 	cd  $(GNGEO_SRC_PATH)/src && prlimit --data=$(HEAP_SIZE) \
 	./gngeo --datafile=../gngeo.dat/gngeo_data.zip --blitter=soft
-
 
 drun_linux:
 	cd  $(GNGEO_SRC_PATH)/src && valgrind -s --leak-check=full --show-leak-kinds=all \

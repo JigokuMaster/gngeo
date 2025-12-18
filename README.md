@@ -10,11 +10,11 @@ NeoGeo emulator for Symbian S60v3 and higher ( devices with physical keyboard) b
 
 #  Notes:
 
-- if games play slow on your phone try to enable autoframeskip from option menu
+- If a game is runnig slow on your phone try to enable autoframeskip from option menu.
 
-- the sound is disabled by default, you can enable it from samplerate option but games may run slow. 
+- The sound is disabled by default, you can enable it from samplerate option but games may run slow. 
 
-- big games needs more RAM unfortunately still no solution for devices with low memory.
+- Big games needs more RAM, use a .gno ROM and keep the sound disabled.
 
 - GnGeo won't recognize some games,for example if you have metalslugx.zip , rename it to mslugx.zip. see [romrc](https://github.com/JigokuMaster/gngeo/blob/main/src/gngeo-0.8/romrc) for proper names.
 

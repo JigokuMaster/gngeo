@@ -189,15 +189,24 @@ SDL_Surface *load_state_img(char *game,int slot) {
     return state_img_tmp;
 }
 
-
+extern int neo_sound_initialized;
 static void neogeo_mkstate(gzFile gzf,int mode) {
 	GAME_ROMS r;
+	/*GFX_CACHE spr_cache;
+	if(memory.vid.spr_cache.data){
+	    memcpy(&spr_cache,&memory.vid.spr_cache ,sizeof(GFX_CACHE));
+	}*/
 	memcpy(&r,&memory.rom,sizeof(GAME_ROMS));
 	mkstate_data(gzf, &memory, sizeof (memory), mode);
 
 	/* Roms info are needed (at least) for z80 bankswitch, so we need to restore
 	 * it asap */
-	if (mode==STREAD) memcpy(&memory.rom,&r,sizeof(GAME_ROMS));
+	if (mode==STREAD){
+	    memcpy(&memory.rom,&r,sizeof(GAME_ROMS));
+	    /*if(memory.vid.spr_cache.data){
+	    	memcpy(&memory.vid.spr_cache,&spr_cache, sizeof(GFX_CACHE));
+	    }*/
+	}
 
 
 	mkstate_data(gzf, &bankaddress, sizeof (Uint32), mode);
@@ -205,6 +214,7 @@ static void neogeo_mkstate(gzFile gzf,int mode) {
 	cpu_68k_mkstate(gzf, mode);
 #ifndef ENABLE_940T
 	mkstate_data(gzf, z80_bank,sizeof(Uint16)*4, mode);
+	if ((mode==STREAD) && !neo_sound_initialized) return;
 	cpu_z80_mkstate(gzf, mode);
 	ym2610_mkstate(gzf, mode);
 #else
@@ -232,6 +242,9 @@ bool load_state(char *game,int slot) {
 	Uint8 *fix_game_usage=memory.fix_game_usage;
 	Uint8 *bksw_unscramble = memory.bksw_unscramble;
 	int *bksw_offset=memory.bksw_offset;
+	// Save gno cache struct.
+	GFX_CACHE spr_cache = memory.vid.spr_cache;
+
 //	GAME_ROMS r;
 //	memcpy(&r,&memory.rom,sizeof(GAME_ROMS));
 	
@@ -252,6 +265,8 @@ bool load_state(char *game,int slot) {
 	memory.bksw_offset=bksw_offset;
 //	memcpy(&memory.rom,&r,sizeof(GAME_ROMS));
 
+	/* Restore gno cache struct.*/
+	memory.vid.spr_cache = spr_cache;
 	cpu_68k_bankswitch(bankaddress);
 
 	if (memory.current_vector==0)
