@@ -1732,6 +1732,8 @@ int read_region(FILE *gno, GAME_ROMS *roms) {
 	printf("Read region %d %08X type %d\n", lid, size, type);
 	if (type == 0)
 	{
+		// adpcma REGION_AUDIO_DATA_1 sfx
+		// adpcmb REGION_AUDIO_DATA_2 music
 		if((!conf.sound) && (lid == REGION_AUDIO_DATA_1 || lid == REGION_AUDIO_DATA_2))
 		{
 		    printf("Skip region size=%d\n", (size + r->size));    

@@ -21,7 +21,7 @@
 #include "screen.h"
 #include "sound.h"
 #include "emu.h"
-//#include "streams.h"
+#include "menu.h"
 
 #ifdef USE_STARSCREAM
 static int m68k_flag=0x1;
@@ -191,11 +191,9 @@ SDL_Surface *load_state_img(char *game,int slot) {
 
 extern int neo_sound_initialized;
 static void neogeo_mkstate(gzFile gzf,int mode) {
+	//Uint8 z80_ram_sav[0x800];
+	//memcpy(z80_ram_sav, memory.z80_ram, 0x800);
 	GAME_ROMS r;
-	/*GFX_CACHE spr_cache;
-	if(memory.vid.spr_cache.data){
-	    memcpy(&spr_cache,&memory.vid.spr_cache ,sizeof(GFX_CACHE));
-	}*/
 	memcpy(&r,&memory.rom,sizeof(GAME_ROMS));
 	mkstate_data(gzf, &memory, sizeof (memory), mode);
 
@@ -203,20 +201,21 @@ static void neogeo_mkstate(gzFile gzf,int mode) {
 	 * it asap */
 	if (mode==STREAD){
 	    memcpy(&memory.rom,&r,sizeof(GAME_ROMS));
-	    /*if(memory.vid.spr_cache.data){
-	    	memcpy(&memory.vid.spr_cache,&spr_cache, sizeof(GFX_CACHE));
-	    }*/
 	}
-
 
 	mkstate_data(gzf, &bankaddress, sizeof (Uint32), mode);
 	mkstate_data(gzf, &sram_lock, sizeof (Uint8), mode);
 	cpu_68k_mkstate(gzf, mode);
 #ifndef ENABLE_940T
+	if (!neo_sound_initialized) return;
+	if (mode==STREAD)
+	{
+	    if(gn_popup_question("Load state", "restoring audio state might not work properly! continue?") == 1) return;
+	}
 	mkstate_data(gzf, z80_bank,sizeof(Uint16)*4, mode);
-	if ((mode==STREAD) && !neo_sound_initialized) return;
 	cpu_z80_mkstate(gzf, mode);
 	ym2610_mkstate(gzf, mode);
+
 #else
 /* TODO */
 #endif
@@ -245,9 +244,6 @@ bool load_state(char *game,int slot) {
 	// Save gno cache struct.
 	GFX_CACHE spr_cache = memory.vid.spr_cache;
 
-//	GAME_ROMS r;
-//	memcpy(&r,&memory.rom,sizeof(GAME_ROMS));
-	
 	if ((gzf = open_state(game, slot, STREAD))==NULL)
 		return false;
 
@@ -257,13 +253,11 @@ bool load_state(char *game,int slot) {
 	gzread(gzf,state_img_tmp->pixels,304*224*2);
 
 	neogeo_mkstate(gzf,STREAD);
-
 	/* Restore them */
 	memory.ng_lo=ng_lo;
 	memory.fix_game_usage=fix_game_usage;
 	memory.bksw_unscramble=bksw_unscramble;
 	memory.bksw_offset=bksw_offset;
-//	memcpy(&memory.rom,&r,sizeof(GAME_ROMS));
 
 	/* Restore gno cache struct.*/
 	memory.vid.spr_cache = spr_cache;

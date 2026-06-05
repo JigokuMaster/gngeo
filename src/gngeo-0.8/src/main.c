@@ -115,9 +115,12 @@ void init_sdl(void /*char *rom_name*/) {
 
 
     char *nomouse = getenv("SDL_NOMOUSE");
-
+#ifdef __SYMBIAN32__
+    SDL_Init(SDL_INIT_VIDEO);
+#else
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_NOPARACHUTE);
     //SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+#endif
 
 #ifdef GP2X
     atexit(gp2x_quit);

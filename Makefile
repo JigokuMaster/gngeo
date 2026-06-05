@@ -23,7 +23,7 @@ clean_linux:
 
 
 APP_NAME=gngeo
-SIS_FP="sis/$(APP_NAME)_gcce.sisx"
+SIS="$(APP_NAME)_gcce.sis"
 EXE=$(APP_NAME).exe
 EXE_FP=$(EPOCROOT)/epoc32/release/gcce/urel/$(EXE)
 
@@ -34,9 +34,12 @@ mksisx:
 	cd sis && signsis $(APP_NAME)_gcce.sis $(APP_NAME)_gcce.sisx mycert.cer mykey.key
 
 depoly:
-	renv_send "$(SIS_FP)"
+	#renv send "sis/$(SIS)" "C:\\$(SIS)"
+	renv send "sis/$(SIS)x" "C:\\$(SIS)x"
+
 run:
-	renv_install "$(EXE_FP)" -r
+	renv send "$(EXE_FP)" "C:\\sys\\bin\\$(EXE)"
+	renv start -w $(EXE)
 
 #HEAP_SIZE = 27000000 # 25MB
 #HEAP_SIZE = 20240000 # 10MB

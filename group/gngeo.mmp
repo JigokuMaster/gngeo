@@ -121,7 +121,7 @@ LIBRARY  hal.lib //remconinterfacebase.lib remconcoreapi.lib
 #ifdef DEBUG_TRACE_ENABLED
 LIBRARY flogger.lib
 #endif
-
+LIBRARY	       libgles_cm.lib
 
 LIBRARY libc.lib libm.lib libz.lib
 STATICLIBRARY SDL.lib

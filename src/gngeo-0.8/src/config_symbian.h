@@ -197,6 +197,7 @@
 
 /* Define to use alternative opengl blitter */
 // #define USE_GL2 1
+#define HAVE_GL_GL_H 1
 
 /* Define to enable mamez80 */
 //#define USE_MAMEZ80 1

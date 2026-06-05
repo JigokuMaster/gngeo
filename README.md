@@ -1,22 +1,28 @@
-NeoGeo emulator for Symbian S60v3 and higher ( devices with physical keyboard) based on [GnGeo 0.8 ](https://github.com/linuxlinks/gngeo). 
+NeoGeo emulator for Symbian S60v3 and higher (devices with physical keyboard)
+port based on [GnGeo 0.8](https://github.com/linuxlinks/gngeo). 
 
 # Installation
 
-* download [gngeo_gcce.sisx](https://github.com/JigokuMaster/gngeo/releases) 
+* Download [gngeo_gcce.sisx](https://github.com/JigokuMaster/gngeo/releases) 
 
-* you may need to install PIPS 1.7
+* You may need to install PIPS 1.7
 
-* put your games in the drive where gngeo was installed e.g if installed in C then put them in C:\\gngeo\\roms
+* It's highly recommended to download games as .gno ROM, this format loads faster and use less RAM compared to zipped ROMs you can download most of the games from [here](https://github.com/steward-fu/website/releases/tag/neogeo)
+
+* Put your games in the drive where gngeo was installed, if installed in C then put them in C:\\gngeo\\roms
 
 #  Notes:
 
-- If a game is runnig slow on your phone try to enable autoframeskip from option menu.
+- GnGeo can not play all games (metalslug4, metalslug4 plus, metalslug3, metalslug5) are loadable but not playable.
+
+- If some control key is missing from the menu. download the default [gnogeo]() copy it to gngeo folder in E or C drive.
+
+
+- If some game is runnig very slow, try to enable autoframeskip from option menu.
 
 - The sound is disabled by default, you can enable it from samplerate option but games may run slow. 
 
-- Big games needs more RAM, use a .gno ROM and keep the sound disabled.
-
-- GnGeo won't recognize some games,for example if you have metalslugx.zip , rename it to mslugx.zip. see [romrc](https://github.com/JigokuMaster/gngeo/blob/main/src/gngeo-0.8/romrc) for proper names.
+- Big games needs more RAM, remember to download the game as .gno ROM and keep the sound disabled.
 
 
 # Controls 
@@ -53,7 +59,8 @@ use the GREEN Key to take screenshot, it will be saved in gngeo\screenshots fold
 
 
 # Building
-gngeo was built on linux (using gnupoc package) for ARM (GCCE) WINSCW target wasn't tested.
+
+gngeo was built on Linux (using gnupoc package and GCCE 3.4.3)
 
 clone/download [SDL1.2.13](https://github.com/JigokuMaster/symbian-sdl-libs) and build SDL.lib
 
@@ -88,6 +95,5 @@ make mksis
 
 # TO-DO:
 - Add OpenGLES support.
-- Big ROM support for low memory phones
--  Compile without PIPS , maybe a UIQ3.1 port  ...
-- Add ROMs downloader
+- Compile without PIPS (UIQ3.1 port).
+- Add ROMs downloader.
