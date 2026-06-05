@@ -15,7 +15,7 @@ port based on [GnGeo 0.8](https://github.com/linuxlinks/gngeo).
 
 - GnGeo can not play all games (metalslug4, metalslug4 plus, metalslug3, metalslug5) are loadable but not playable.
 
-- If some control key is missing from the menu. download the default [gnogeo]() copy it to gngeo folder in E or C drive.
+- If some control key is missing from the menu, download the default [gngeorc](https://github.com/JigokuMaster/gngeo/blob/main/src/gngeo-0.8/gngeorc.symbian) rename to gngeorc and copy to gngeo folder in E or C drive.
 
 
 - If some game is runnig very slow, try to enable autoframeskip from option menu.
