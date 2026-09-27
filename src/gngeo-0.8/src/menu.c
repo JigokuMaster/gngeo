@@ -1693,14 +1693,14 @@ static int toggle_menu_anim(GN_MENU_ITEM *self, void *param)
 }
 
 #ifdef SYMBIAN
-static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
+/*static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
 {
-    int ret = symbian_ui_orientation_setup();
+    int ret = symbian_setup_screenorientation();
     gn_popup_info("config changed", "Please restart the emulator.");
     self->val = ret;//self->val;   
     return MENU_STAY;
 }
-
+*/
 static int change_audio_volume(GN_MENU_ITEM *self, void *param)
 {
     SDL_Event event;
@@ -2139,14 +2139,15 @@ void gn_init_menu(void) {
 
 	option_menu = create_menu("Options", MENU_SMALL, NULL, NULL);
 
-#ifdef SYMBIAN
+/*#ifdef SYMBIAN
 
 	gitem = gn_menu_create_item("Landscape Mode", MENU_CHECK, toggle_landscapemode, NULL);
-	gitem->val = symbian_ui_orientation_get();
+	gitem->val = symbian_get_screenorientation();
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 
-#endif	
+#endif
+*/
 	gitem = gn_menu_create_item("Menu Animation", MENU_CHECK, toggle_menu_anim, NULL);
 	menu_anim = CF_BOOL(cf_get_item_by_name("menu_anim"));
 	gitem->val = menu_anim;

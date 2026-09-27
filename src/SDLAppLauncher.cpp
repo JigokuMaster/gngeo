@@ -31,13 +31,21 @@ extern "C" void _epoc32_atexit(void (*function)(void))
 extern "C" void CloseSTDLIB(){} 
 #endif
 
+extern TBool EPOC_SetupScreenOrientation()
+{
+#ifdef S60V3
+    CAknAppUi* appUi = dynamic_cast<CAknAppUi*>(CEikonEnv::Static()->AppUi());
+    if (!appUi) return 0;
 
-extern "C" int GetScreenOrientation()
-{}
 
+    // always set landscape on 240x320.
+    TBool landscape = (appUi->ApplicationRect().Width() == 240) && (appUi->ApplicationRect().Height() == 320);
 
-extern "C" void SetupScreenOrientation()
-{}
+    TRAPD(err, appUi->SetOrientationL( landscape? CAknAppUiBase::EAppUiOrientationLandscape : CAknAppUiBase::EAppUiOrientationPortrait));	
+    return (err == KErrNone);
+#endif
+}
+
 
 
 LOCAL_C void SetEPOCEnvVars()
@@ -69,15 +77,8 @@ public:
 	void LaunchAppL(int argc, char** argv)
 	{
 
-	    /*char* myargv[2];
-	    myargv[0] = argv[0];
-	    myargv[1] = "C:\\Data\\SMSPlus\\sonic.sms";*/
 	    SetEPOCEnvVars();
-#ifdef S60V3
-    
-	    CAknAppUi* appUi = dynamic_cast<CAknAppUi*>(CEikonEnv::Static()->AppUi());
-	    if (appUi) appUi->SetOrientationL(CAknAppUiBase::EAppUiOrientationPortrait);	    
-#endif
+	    EPOC_SetupScreenOrientation();
 	    CSDLApp::LaunchAppL(argc, argv);
 	}
 

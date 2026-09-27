@@ -38,7 +38,7 @@ SOURCE SDLAppLauncher.cpp
 
 SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE main.c
-SOURCE symbian_s60.c
+SOURCE symbian_s60.cpp
 SOURCE pd4990a.c
 SOURCE video.c
 SOURCE profiler.c

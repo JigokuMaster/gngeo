@@ -1,3 +1,5 @@
+
+#include <aknappui.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,49 +35,55 @@ static void symbian_mkdir(char* dir)
     if(access(dir, F_OK | W_OK) == -1)
     {
 	printf("Could not create path: %s\n", dir);
-	symbian_exit(1);
+	symbian_exit();
     }
 }
 
 static int symbian_init_dirs()
 {
-    char* drive_paths[4] = {"F:", "E:", "C:", NULL};
-    int i = 0;
-    char* d;
-    while((d = drive_paths[i]) != NULL)
+    char* priv_dir = getenv("EPOC_PRIVATE_DIR");
+    if (!priv_dir) 
     {
-	/* roms should be put in the drive where gngeo was installed */
-	sprintf(g_symbian_gngeo_datafile, "%s\\private\\%s\\gngeo_data.zip", d, GNGEO_APP_UID);
-	if(access(g_symbian_gngeo_datafile, F_OK | W_OK) == 0)
-	{
-	    sprintf(g_symbian_gngeo_dir, "%s\\gngeo\\", d);
-	    sprintf(g_symbian_gngeo_romsdir, "%sroms\\", g_symbian_gngeo_dir);
-	    symbian_mkdir(g_symbian_gngeo_dir);
-	    symbian_mkdir(g_symbian_gngeo_romsdir);
-	    return 1;/*access(g_symbian_gngeo_dir, F_OK | W_OK) == 0*/;
-	}
-	i++;
+	puts("EPOC_PRIVATE_DIR not found.\n");
+	return 0;
+    }
+
+    sprintf(g_symbian_gngeo_datafile, "%s\\gngeo_data.zip", priv_dir);
+
+    /* roms should be put in the drive where gngeo was installed */
+    if(access(g_symbian_gngeo_datafile, F_OK | W_OK) == 0) 
+    {
+	sprintf(g_symbian_gngeo_dir, "c%:\\gngeo\\", priv_dir[0]);
+	sprintf(g_symbian_gngeo_romsdir, "%sroms\\", g_symbian_gngeo_dir);
+	symbian_mkdir(g_symbian_gngeo_dir);
+	symbian_mkdir(g_symbian_gngeo_romsdir);
+	return 1;/*access(g_symbian_gngeo_dir, F_OK | W_OK) == 0*/;
     }
     return 0;
 }
 
+
+
 void symbian_init()
 {
 
+
     if(!symbian_init_dirs())
     {
-	printf("Could not find gngeo path\n");
+	puts("Could not find gngeo path\n");
 	symbian_exit();
     }
 
     setenv("HOME", g_symbian_gngeo_dir, 1); 
     chdir(g_symbian_gngeo_dir);    
     symbian_mkdir("./screenshots");
+
     /* setup log files...*/
-    int fd1 = open("stdout.log", O_WRONLY | O_CREAT | O_TRUNC);
-    int fd2 = open("sterr.log", O_WRONLY | O_CREAT | O_TRUNC);
-    dup2(fd1, 1); 
-    dup2(fd1, 2);
+    // dup2 is buggy on Symbian OpenC layer ...
+    freopen("stdout.log", "w+", stdout);
+    freopen("sterr.log", "w+", stderr);
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stderr, NULL, _IONBF, 0);
     fprintf(stdout, "GNGEO_DIR=%s\n", g_symbian_gngeo_dir);
     fprintf(stdout, "GNGEO_ROMS_DIR=%s\n", g_symbian_gngeo_romsdir);
     fprintf(stdout, "GNGEO_DATAFILE=%s\n", g_symbian_gngeo_datafile);
@@ -133,14 +141,22 @@ void symbian_audio_mute()
     EPOC_SetAudioVolume(0);
 }
 
-int symbian_ui_orientation_get()
+bool symbian_get_screenorientation()
 {
-    return GetScreenOrientation();
+
+    CAknAppUi* appUi = dynamic_cast<CAknAppUi*>(CEikonEnv::Static()->AppUi());
+    if (!appUi) return 0;
+    // return true if landscape is enabled.
+    return ((appUi->ApplicationRect().Width() == 240) && (appUi->ApplicationRect().Height() == 320));   
 }
 
-int symbian_ui_orientation_setup()
+
+extern TBool EPOC_SetupScreenOrientation();
+
+bool symbian_setup_screenorientation()
 {
-    return SetupScreenOrientation();
+    return EPOC_SetupScreenOrientation();
 }
+
 
 
