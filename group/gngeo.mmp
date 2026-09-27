@@ -1,22 +1,21 @@
 #include "gngeo.mmh"
+#include "../inc/SDLLauncher.hrh"
 
-OPTION GCCE -Wno-unused -O3 -ftracer -fstrength-reduce -funroll-loops  -fomit-frame-pointer -fstrict-aliasing -ffast-math
+OPTION GCCE -Wno-unused -O3 -ftracer 
+OPTION GCCE -fstrength-reduce -funroll-loops  
+OPTION GCCE -fomit-frame-pointer -fstrict-aliasing -ffast-math
 MACRO   OPENC
-MACRO   SYMBIAN
+MACRO   SYMBIAN S60V3
+
 MACRO   HAVE_CONFIG_H
 MACRO   _GNU_SOURCE=1
 MACRO   _REENTRANT
 MACRO   USE_STBZLIB
 
-/*
-MACRO   STBI_NO_THREAD_LOCALS
-MACRO   STBI_NO_SIMD
-MACRO   STB_IMAGE_STATIC
-*/
 
 TARGET gngeo.exe
 TARGETTYPE exe
-UID 0 0xbe99619c
+UID 0 KSDLAppLauncherUid
 //           8MB     50MB
 //EPOCHEAPSIZE 8000000 52000000
 //           8MB     241MB
@@ -27,12 +26,15 @@ EPOCSTACKSIZE 80000
 
 CAPABILITY ReadUserData WriteUserData
 
-USERINCLUDE  ..\src\gngeo-0.8\src ..\src\gngeo-0.8\src\ym2610
+USERINCLUDE  ..\src\gngeo-0.8\src 
+USERINCLUDE ..\src\gngeo-0.8\src\ym2610
 SYSTEMINCLUDE ..\src\gngeo-0.8\src  
 SYSTEMINCLUDE \epoc32\include \epoc32\include\stdapis
-SYSTEMINCLUDE \epoc32\include\SDL
+SYSTEMINCLUDE \epoc32\include\ESDL
+USERINCLUDE  ..\inc
 SOURCEPATH ..\src
-SOURCE sdlapp.cpp
+SOURCE SDLAppLauncher.cpp
+
 
 SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE main.c
@@ -69,19 +71,17 @@ SOURCE Video_arm.s Memcpy.S
 
 MACRO USE_CYCLONE=1
 //MACRO USE_DRZ80=1
-MACRO USE_MAMEZ80=1
 
 USERINCLUDE ..\src\gngeo-0.8\src\drz80
 USERINCLUDE ..\src\gngeo-0.8\src\cyclone
 SOURCEPATH  ..\src\gngeo-0.8\src\drz80
-//SOURCE DrZ80.s
+SOURCE DrZ80.s
 SOURCEPATH  ..\src\gngeo-0.8\src\cyclone
 SOURCE Cyclone.s
 
 SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE cyclone_interf.c
 //SOURCE drz80_interf.c
-SOURCE mamez80_interf.c
 #else
 SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE generator68k_interf.c
@@ -89,6 +89,9 @@ SOURCE mamez80_interf.c
 MACRO USE_GENERATOR68K=1
 MACRO USE_MAMEZ80=1
 #endif
+
+ALWAYS_BUILD_AS_ARM
+
 
 SOURCEPATH ..\data
 START RESOURCE  gngeo.rss
@@ -121,15 +124,12 @@ LIBRARY  hal.lib //remconinterfacebase.lib remconcoreapi.lib
 #ifdef DEBUG_TRACE_ENABLED
 LIBRARY flogger.lib
 #endif
-LIBRARY	       libgles_cm.lib
 
 LIBRARY libc.lib libm.lib libz.lib
-STATICLIBRARY SDL.lib
+STATICLIBRARY ESDL.lib
 STATICLIBRARY libgn_ym2610.lib
 STATICLIBRARY libgn_blitter.lib libgn_effect.lib
-#ifdef USE_ASM_CORE
-STATICLIBRARY libgn_mamez80.lib
-#else
+#ifndef USE_ASM_CORE
 STATICLIBRARY libgn_mamez80.lib libgn_generator68k.lib
 #endif
 

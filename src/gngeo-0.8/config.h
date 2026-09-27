@@ -45,7 +45,7 @@
 #define HAVE_GETTIMEOFDAY 1
 
 /* Define to 1 if you have the <GL/gl.h> header file. */
-#define HAVE_GL_GL_H 1
+/* #undef HAVE_GL_GL_H */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -54,7 +54,7 @@
 #define HAVE_LIBM 1
 
 /* Define to 1 if you have the `z' library (-lz). */
-#define HAVE_LIBZ 1
+/* #undef HAVE_LIBZ */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1

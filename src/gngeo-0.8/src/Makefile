@@ -168,12 +168,12 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
-ACLOCAL = ${SHELL} /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/missing --run aclocal-1.11
-AMTAR = ${SHELL} /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/missing --run tar
+ACLOCAL = ${SHELL} /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/missing --run aclocal-1.11
+AMTAR = ${SHELL} /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/missing --run tar
 AM_DEFAULT_VERBOSITY = 1
-AUTOCONF = ${SHELL} /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/missing --run autoconf
-AUTOHEADER = ${SHELL} /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/missing --run autoheader
-AUTOMAKE = ${SHELL} /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/missing --run automake-1.11
+AUTOCONF = ${SHELL} /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/missing --run autoconf
+AUTOHEADER = ${SHELL} /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/missing --run autoheader
+AUTOMAKE = ${SHELL} /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/missing --run automake-1.11
 AWK = mawk
 CC = gcc
 CCAS = gcc
@@ -181,7 +181,7 @@ CCASDEPMODE = depmode=gcc3
 CCASFLAGS = -fcommon
 CCDEPMODE = depmode=gcc3
 CC_FOR_BUILD = gcc
-CFLAGS = -fcommon -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT -O3 -fstrength-reduce -frerun-loop-opt -Wall -Wno-unused -funroll-loops                     -ffast-math  -fexpensive-optimizations                      -malign-double -fomit-frame-pointer -g 		    -fno-strict-aliasing -pipe -DCPU=x86_64
+CFLAGS = -fcommon -I/usr/local/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT -O3 -fstrength-reduce -frerun-loop-opt -Wall -Wno-unused -funroll-loops                     -ffast-math  -fexpensive-optimizations                      -malign-double -fomit-frame-pointer -g 		    -fno-strict-aliasing -pipe -DCPU=x86_64
 CPP = gcc -E
 CPPFLAGS = 
 CYGPATH_W = echo
@@ -200,9 +200,9 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LDFLAGS = 
 LIBOBJS = 
-LIBS = -lz -lm  -L/usr/lib/x86_64-linux-gnu -lSDL
+LIBS = -lm  -L/usr/local/lib -Wl,-rpath,/usr/local/lib -lSDL -lpthread
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/missing --run makeinfo
+MAKEINFO = ${SHELL} /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/missing --run makeinfo
 MKDIR_P = /usr/bin/mkdir -p
 OBJEXT = o
 PACKAGE = gngeo
@@ -214,17 +214,17 @@ PACKAGE_URL =
 PACKAGE_VERSION = 0.8
 PATH_SEPARATOR = :
 RANLIB = ranlib
-SDL_CFLAGS = -I/usr/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
-SDL_CONFIG = /usr/bin/sdl-config
-SDL_LIBS = -L/usr/lib/x86_64-linux-gnu -lSDL
+SDL_CFLAGS = -I/usr/local/include/SDL -D_GNU_SOURCE=1 -D_REENTRANT
+SDL_CONFIG = /usr/local/bin/sdl-config
+SDL_LIBS = -L/usr/local/lib -Wl,-rpath,/usr/local/lib -lSDL -lpthread
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = 
 VERSION = 0.8
-abs_builddir = /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/src
-abs_srcdir = /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/src
-abs_top_builddir = /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8
-abs_top_srcdir = /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8
+abs_builddir = /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/src
+abs_srcdir = /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/src
+abs_top_builddir = /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8
+abs_top_srcdir = /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8
 ac_ct_CC = gcc
 am__include = include
 am__leading_dot = .
@@ -252,7 +252,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/jigokumaster/Dev/Symbian/gngeo-dev/src/gngeo-0.8/install-sh
+install_sh = ${SHELL} /root/Symbian-Projects/gngeo-dev/src/gngeo-0.8/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
