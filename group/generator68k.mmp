@@ -32,3 +32,5 @@ SOURCE cpu68k.c
 SOURCE reg68k.c
 SOURCE diss68k.c
 SOURCE tab68k.c
+
+ALWAYS_BUILD_AS_ARM

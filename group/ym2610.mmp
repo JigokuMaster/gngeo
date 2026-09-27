@@ -13,6 +13,7 @@ SYSTEMINCLUDE  ..\src\gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epo
 SOURCEPATH  ..\src\gngeo-0.8\src\ym2610
 SOURCE 2610intf.c ym2610.c
 
+ALWAYS_BUILD_AS_ARM
 
 
 

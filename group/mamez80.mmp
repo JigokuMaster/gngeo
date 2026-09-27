@@ -13,6 +13,7 @@ SYSTEMINCLUDE ..\src\gngeo-0.8\src \epoc32\include \epoc32\include\stdapis \epoc
 SOURCEPATH ..\src\gngeo-0.8\src\mamez80
 SOURCE z80.c
 
+ALWAYS_BUILD_AS_ARM
 
 
 

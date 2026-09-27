@@ -21,3 +21,5 @@ SOURCE lq2x.c
 SOURCE hq3x.c
 SOURCE lq3x.c
 SOURCE hqx_common.c
+
+ALWAYS_BUILD_AS_ARM
