@@ -14,6 +14,7 @@
 char g_symbian_gngeo_dir[12];
 char g_symbian_gngeo_romsdir[17];
 char g_symbian_gngeo_datafile[256];
+static char* state_dir = "./state/";
 static int current_audio_volume = 5;
 
 static TBool GetPrivateFile(RFs& aRfs, TFileName &aFilePath, const TDesC &aFileName)
@@ -101,6 +102,7 @@ void symbian_init()
     fprintf(stdout, "GNGEO_ROMS_DIR=%s\n", g_symbian_gngeo_romsdir);
     fprintf(stdout, "GNGEO_DATAFILE=%s\n", g_symbian_gngeo_datafile);
     symbian_mkdir("./screenshots");
+    symbian_mkdir(state_dir);
     // copy the default config only if needed.
     RFs rfs;
     TInt error = KErrNone;
@@ -145,6 +147,34 @@ char* symbian_gngeo_datafile()
 {
     return g_symbian_gngeo_datafile;
 }
+
+
+char* symbian_get_state_dir(char* game, int slot)
+{
+    if (!game) return state_dir; // flag to skip check if we are not reading the state file.
+
+    char tmp_path[256] = {0,};
+    sprintf(tmp_path, "%s%s.%03d", state_dir, game, slot);
+    if(access(tmp_path, F_OK | W_OK) != -1) 
+    {
+	return state_dir;
+    }
+    return g_symbian_gngeo_dir; // old path for backward compatibly. 
+}
+
+char* symbian_get_nvram_dir(char* game)
+{
+
+    if (!game) return state_dir; // flag to skip check if we are not reading the state file.
+    char tmp_path[256] = {0,};
+    sprintf(tmp_path, "%s%s.nv", state_dir, game);
+    if(access(tmp_path, F_OK | W_OK) != -1) 
+    {
+	return state_dir;
+    }
+    return g_symbian_gngeo_dir; // old path for backward compatibly.     
+}
+
 
 void symbian_audio_volume_set(int v, int update)
 {

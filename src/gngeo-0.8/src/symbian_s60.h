@@ -14,6 +14,8 @@ char*	symbian_gngeo_dir();
 char*	symbian_gngeo_romsdir();
 char*	symbian_gngeo_biosdir();
 char*	symbian_gngeo_datafile();
+char*	symbian_get_state_dir(char* game, int slot);
+char* 	symbian_get_nvram_dir(char* game);
 void	symbian_audio_volume_set(int v, int update);
 int	symbian_audio_volume_get();
 void	symbian_audio_mute();

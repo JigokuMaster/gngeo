@@ -153,6 +153,9 @@ void open_nvram(char *name) {
     const char *gngeo_dir = ROOTPATH"save/";
 #elif defined(__AMIGA__)
     const char *gngeo_dir = "/PROGDIR/save/";
+
+#elif defined (__SYMBIAN32__)
+    char *gngeo_dir=symbian_get_nvram_dir(name);
 #else
     const char *gngeo_dir = get_gngeo_dir();
 #endif
@@ -220,6 +223,9 @@ void save_nvram(char *name) {
     const char *gngeo_dir = ROOTPATH"save/";
 #elif defined(__AMIGA__)
     const char *gngeo_dir = strdup("/PROGDIR/save/");
+
+#elif defined (__SYMBIAN32__)
+    char *gngeo_dir=symbian_get_nvram_dir(NULL);
 #else
     const char *gngeo_dir = get_gngeo_dir();
 #endif

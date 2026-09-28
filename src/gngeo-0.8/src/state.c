@@ -93,8 +93,13 @@ Uint32 how_many_slot(char *game) {
 #ifndef USE_ALLOCA
 		memset(st_name, 0, len);
 #endif    
-	    	sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
 
+#if defined (__SYMBIAN32__)
+		gngeo_dir=symbian_get_state_dir(game, slot);
+		sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
+#else
+		sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
+#endif
 		if (st_name && (f=fopen(st_name,"rb")))
 		{
 			fclose(f);
@@ -117,6 +122,9 @@ static gzFile open_state(char *game,int slot,int mode)
 //    char *st_name_len;
 #ifdef EMBEDDED_FS
     char *gngeo_dir=ROOTPATH"save/";
+
+#elif defined (__SYMBIAN32__)
+    char *gngeo_dir=symbian_get_state_dir(mode==STWRITE ? NULL : game, slot);
 #else
     char *gngeo_dir=get_gngeo_dir();
 #endif
