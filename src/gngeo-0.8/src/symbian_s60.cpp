@@ -1,5 +1,7 @@
 
 #include <aknappui.h>
+#include <bautils.h>
+#include <f32file.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,11 +16,24 @@ char g_symbian_gngeo_romsdir[17];
 char g_symbian_gngeo_datafile[256];
 static int current_audio_volume = 5;
 
+static TBool GetPrivateFile(RFs& aRfs, TFileName &aFilePath, const TDesC &aFileName)
+{
+    if ( aRfs.PrivatePath(aFilePath) == KErrNone )
+    {
+	aFilePath.Insert(0, RProcess().FileName().Left(2)); // insert drive char + seperator
+	aFilePath.Append(aFileName);
+	return ETrue;
+    }
+    return EFalse;
+}
+
+
 static void symbian_exit()
 {
     getchar();
     exit(1);
 }
+
 
 static void symbian_mkdir(char* dir)
 {
@@ -56,7 +71,7 @@ static int symbian_init_dirs()
 	sprintf(g_symbian_gngeo_romsdir, "%sroms\\", g_symbian_gngeo_dir);
 	symbian_mkdir(g_symbian_gngeo_dir);
 	symbian_mkdir(g_symbian_gngeo_romsdir);
-	return 1;/*access(g_symbian_gngeo_dir, F_OK | W_OK) == 0*/;
+	return 1;
     }
     return 0;
 }
@@ -75,7 +90,6 @@ void symbian_init()
 
     setenv("HOME", g_symbian_gngeo_dir, 1); 
     chdir(g_symbian_gngeo_dir);    
-    symbian_mkdir("./screenshots");
 
     /* setup log files...*/
     // dup2 is buggy on Symbian OpenC layer ...
@@ -86,6 +100,30 @@ void symbian_init()
     fprintf(stdout, "GNGEO_DIR=%s\n", g_symbian_gngeo_dir);
     fprintf(stdout, "GNGEO_ROMS_DIR=%s\n", g_symbian_gngeo_romsdir);
     fprintf(stdout, "GNGEO_DATAFILE=%s\n", g_symbian_gngeo_datafile);
+    symbian_mkdir("./screenshots");
+    // copy the default config only if needed.
+    RFs rfs;
+    TInt error = KErrNone;
+    if ((error = rfs.Connect()) == KErrNone) 
+    {
+       _LIT(KConfigFile, "gngeorc");
+       TFileName source;
+       TFileName target(_L("\\gngeo\\gngeorc"));
+       target.Insert(0, RProcess().FileName().Left(2)); // insert drive char + seperator
+
+       if (!BaflUtils::FileExists(rfs, target) && GetPrivateFile(rfs, source, KConfigFile))
+       {
+
+	   error = BaflUtils::CopyFile(rfs, source, target);
+	   if (error == KErrNone) puts("gngeorc copied\n");
+	   rfs.Close();
+	}
+    }
+
+    if (error != KErrNone) {
+	fprintf(stderr, "failed to copy gngeorc (%d)\n", error);
+	exit(1);
+    }
 }
 
 char* symbian_gngeo_dir()
@@ -128,7 +166,7 @@ void symbian_audio_volume_set(int v, int update)
    
     if(current_audio_volume > max_audio_volume)
     {
-	current_audio_volume = max_audio_volume;
+	current_audio_volume = 5;
     }
     EPOC_SetAudioVolume(current_audio_volume);
 }

@@ -40,7 +40,7 @@
 
 "..\src\gngeo-0.8\gngeo.dat\gngeo_data.zip" - "!:\private\be99619c\gngeo_data.zip"
 
-"..\src\gngeo-0.8\gngeorc.symbian" - "!:\gngeo\gngeorc"
+"..\src\gngeo-0.8\gngeorc.symbian" - "!:\private\be99619c\gngeorc"
 
 "..\data\neogeo.zip" - "!:\gngeo\roms\neogeo.zip"
 
