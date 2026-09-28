@@ -259,7 +259,6 @@ int handle_pdep_event(SDL_Event *event) {
 }
 
 #elif SYMBIAN
-static int max_vol = 256;
 int handle_pdep_event(SDL_Event *event)
 {
 	char volbuf[21];
@@ -278,7 +277,7 @@ int handle_pdep_event(SDL_Event *event)
 		    case SDLK_HASH:
 			if(conf.sound)
 			{
-			    symbian_audio_volume_set(10, 1);
+			    symbian_audio_volume_set(1, 1);
 			    sprintf(volbuf, "AVOL+ %d", symbian_audio_volume_get());
 			    draw_message(volbuf);
 			}
@@ -286,7 +285,7 @@ int handle_pdep_event(SDL_Event *event)
 		    case SDLK_ASTERISK: 
 			if(conf.sound)
 			{
-			    symbian_audio_volume_set(-10, 1);
+			    symbian_audio_volume_set(-1, 1);
 			    sprintf(volbuf, "AVOL- %d", symbian_audio_volume_get());
 			    draw_message(volbuf);
 			}

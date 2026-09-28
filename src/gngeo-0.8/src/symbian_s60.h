@@ -7,7 +7,7 @@ extern "C" {
 
 extern	void EPOC_SetAudioVolume(int v);
 extern	int EPOC_GetAudioVolume();
-extern	int Epoc_GetAudioMaxVolume();
+extern	int EPOC_GetAudioMaxVolume();
 
 void	symbian_init();
 char*	symbian_gngeo_dir();

@@ -1704,8 +1704,7 @@ static int toggle_menu_anim(GN_MENU_ITEM *self, void *param)
 static int change_audio_volume(GN_MENU_ITEM *self, void *param)
 {
     SDL_Event event;
-    int current_vol = symbian_audio_volume_get();
-    int old_vol = current_vol;
+    int vol_changed = 0;
     char* title = "Change Audio Volume";
     char msg[100];
     sprintf(msg, "use UP/DOWN");
@@ -1724,26 +1723,29 @@ static int change_audio_volume(GN_MENU_ITEM *self, void *param)
 	    switch (keycode)
 	    {
 		case SDLK_UP:
-		    current_vol = SDL_min(current_vol+10, 256);
-		    symbian_audio_volume_set(current_vol, 0);
+		    symbian_audio_volume_set(1, 1);
+		    vol_changed = 1;
 		    break;
 		case SDLK_DOWN:
-		    current_vol = SDL_max(current_vol-10, 0);
-		    symbian_audio_volume_set(current_vol, 0);
+		    symbian_audio_volume_set(-1, 1);
+		    vol_changed = 1;
 		    break;
 		case SDLK_ESCAPE:
 		case SDLK_RETURN:
-		    if(current_vol != old_vol)
+		{
+		    if(vol_changed)
 		    {
 			CONF_ITEM * cf_item = cf_get_item_by_name("audio_volume");
-			CF_VAL(cf_item) = current_vol;
+			CF_VAL(cf_item) = symbian_audio_volume_get();
 			cf_item_has_been_changed(cf_item);
 		    }	
 		    return MENU_STAY;
+		}
 		default:
 		    break;
 	    }
 
+	    int current_vol = symbian_audio_volume_get();
 	    // redraw
 	    sprintf(msg, "current volume %d", current_vol);
 	    sprintf(self->str, "%d", current_vol);
@@ -2212,7 +2214,7 @@ void gn_init_menu(void) {
 	gitem = gn_menu_create_item("Audio Volume", MENU_LIST, change_audio_volume, NULL);
 	int saved_vol = CF_VAL(cf_get_item_by_name("audio_volume"));
 	symbian_audio_volume_set(saved_vol, 0);
-	sprintf(audio_vol, "%d", saved_vol);
+	sprintf(audio_vol, "%d", symbian_audio_volume_get());
 	gitem->str = audio_vol;
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;

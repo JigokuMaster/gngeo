@@ -12,8 +12,7 @@
 char g_symbian_gngeo_dir[12];
 char g_symbian_gngeo_romsdir[17];
 char g_symbian_gngeo_datafile[256];
-static int max_audio_volume = 256;
-static int current_audio_volume = 0;
+static int current_audio_volume = 5;
 
 static void symbian_exit()
 {
@@ -111,12 +110,15 @@ char* symbian_gngeo_datafile()
 
 void symbian_audio_volume_set(int v, int update)
 {
-    
-    current_audio_volume = v;
+
+    int max_audio_volume = EPOC_GetAudioMaxVolume();
+
     if(update)
     {
-	current_audio_volume = EPOC_GetAudioVolume() + v;
-	
+	current_audio_volume += v;	
+    }
+    else {
+	current_audio_volume = v;
     }
 
     if(current_audio_volume < 0)
