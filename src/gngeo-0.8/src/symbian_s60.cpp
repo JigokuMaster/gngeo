@@ -68,7 +68,7 @@ static int symbian_init_dirs()
     /* roms should be put in the drive where gngeo was installed */
     if(access(g_symbian_gngeo_datafile, F_OK | W_OK) == 0) 
     {
-	sprintf(g_symbian_gngeo_dir, "c%:\\gngeo\\", priv_dir[0]);
+	sprintf(g_symbian_gngeo_dir, "%c:\\gngeo\\", priv_dir[0]);
 	sprintf(g_symbian_gngeo_romsdir, "%sroms\\", g_symbian_gngeo_dir);
 	symbian_mkdir(g_symbian_gngeo_dir);
 	symbian_mkdir(g_symbian_gngeo_romsdir);
