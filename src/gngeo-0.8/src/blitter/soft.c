@@ -75,42 +75,29 @@ blitter_soft_init()
 #ifdef SYMBIAN	
 	sdl_flags = 0/*hw_surface*/;
 	vsync = 0;
-	//neffect = 0;
-	//SDL_Rect** modes = SDL_ListModes(NULL, sdl_flags | SDL_FULLSCREEN);
 	SDL_Rect** modes = SDL_ListModes(NULL, SDL_FULLSCREEN);
 	width = modes[0]->w;
-	height = modes[0]->h; 
-	if(width < 320)
-	{
-	    width = 304;
-	    visible_area.w = width;
-	    visible_area.x = 24;
-	    visible_area.y = 16;
-	}    
-
-	if(height < 224)
-	{
-	    height = 224;
-	}
-
-	if((width > 320) && (height > 320))
-	{
-	    width = 320;
-	    height = 240;    
-	}
+	height = modes[0]->h;
 
 	if (neffect != 0)
-	{	    
-	    width*=effect[neffect].x_ratio;
-	    height*=effect[neffect].y_ratio;
+	{
+	    screen_rect.w*=effect[neffect].x_ratio;
+	    screen_rect.h*=effect[neffect].y_ratio;
+	    if (screen_rect.w > width) screen_rect.w = 304;
+	    if (screen_rect.h > height) screen_rect.h = 224;
+	    screen_rect.x = SDL_abs(width-screen_rect.w) >> 1; 
+	    screen_rect.y = SDL_abs(height-screen_rect.h) >> 1; 
 	}
 
-	screen_rect.x = SDL_max(0, SDL_abs(width-visible_area.w)/2); 
-	screen_rect.y = SDL_max(0, SDL_abs(height-visible_area.h)/2); 
-	screen_rect.w = width;
-	screen_rect.h = height;	
+	else{
+	    screen_rect.x = SDL_abs(width-visible_area.w) >> 1; 
+	    screen_rect.y = SDL_abs(height-visible_area.h) >> 1; 
+	    screen_rect.w = visible_area.w;
+	    screen_rect.h = visible_area.h;
+	}
+
 	printf("screen resolution: %dx%d\n", width, height); 	
-	printf("neogen screen xy: %d,%d\n", screen_rect.x , screen_rect.y); 
+	printf("neogen screen rect: %d,%d,%d,%d\n", screen_rect.x , screen_rect.y, screen_rect.w, screen_rect.h); 
 #else
 	if (neffect!=0)	scale =1;
 	if (scale == 1) {
@@ -297,20 +284,11 @@ int threaded_blit(void *buf)
 	return 0;
 }
 #endif
-#ifdef SYMBIANX
+#ifdef SYMBIAN
 void blitter_soft_update()
 {
-
-    SDL_BlitSurface(buffer, &visible_area, screen, &screen_rect);
-    SDL_Flip(screen);
-    /*if(vsync)
-    {
-	SDL_Flip(screen);
-    }	
-    else
-    {
-	SDL_UpdateRect(screen, 0, 0, 0, 0);
-    }*/
+    SDL_BlitSurface(buffer, &visible_area, screen, &screen_rect); 
+    SDL_UpdateRects(screen, 1, &screen_rect);
 }
 
 #else
@@ -343,7 +321,6 @@ void blitter_soft_update()
   else
 	  SDL_UpdateRect(screen, 0, 0, 0, 0);
 #endif
-//	SDL_Flip(screen);
 #endif
  
 }

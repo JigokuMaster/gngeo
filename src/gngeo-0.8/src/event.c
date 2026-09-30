@@ -45,24 +45,20 @@ static int get_mapid(char *butid) {
 
 #ifdef SYMBIAN
 static int symbian_audio_volkeys_mapped = 0;
+static Uint8 mapped_buttons[GN_MAX_KEY] = {0,};
+
 // FIX sscanf exp: this is much faster on symbian
 bool create_joymap_from_string(int player,char *jconf)
 {
 
-	symbian_audio_volkeys_mapped = 0;
 	char *v;
 	char butid[32]={0};
 	int rc, code;
 	char type;
+
 	printf("Jconf=%s\n",jconf);
-	if (jconf==NULL)
-	{    
-	    return false;
-	}
-	if (strlen(jconf)==0)
-	{    
-	    return false;
-	}
+	if (jconf==NULL) return false;
+	if (strlen(jconf)==0) return false;
 
 	char* tmp = strdup(jconf);
 	v = strtok(tmp,",");
@@ -78,11 +74,12 @@ bool create_joymap_from_string(int player,char *jconf)
 		    {
 			//printf("default volume keys mapped\n");
 			symbian_audio_volkeys_mapped = 1;
-		    }	
+		    }
 		    jmap->key[code].player=player;
-		    jmap->key[code].map=get_mapid(butid);
+		    int id = get_mapid(butid);
+		    mapped_buttons[id] = 1;
+		    jmap->key[code].map=id;
 		}
-		//printf("%d\n",get_mapid(butid));
 	    }
 	    v = strtok(NULL, ",");
 	}
@@ -90,6 +87,70 @@ bool create_joymap_from_string(int player,char *jconf)
 	free(tmp);
 	return true;
 }
+
+// set default mapping in case some key is missing
+void map_default_buttons()
+{
+    int i;
+    for (i = 1; i < GN_MENU_KEY; i++) 
+    {
+	int btn = mapped_buttons[i];
+	if (btn != 0) continue;
+	fprintf(stderr, "%d not mapped\n", i);
+	// maybe there is a better way than this long/hardcoded switch-case...
+	switch (i)
+	{
+	    case GN_A:
+		jmap->key[SDLK_2].map=i;
+		jmap->key[SDLK_2].player=1;
+		break;
+	    case GN_B:
+		jmap->key[SDLK_8].map=i;
+		jmap->key[SDLK_8].player=1;
+		break;
+	    case GN_C:
+		jmap->key[SDLK_4].map=i;
+		jmap->key[SDLK_4].player=1;
+		break;
+	    case GN_D:
+		jmap->key[SDLK_6].map=i;
+		jmap->key[SDLK_6].player=1;
+		break;
+	    case GN_START:
+		jmap->key[SDLK_5].map=i;
+		jmap->key[SDLK_5].player=1;
+		jmap->key[SDLK_RETURN].map=i;
+		jmap->key[SDLK_RETURN].player=1;
+		break;
+	    case GN_UP:
+		jmap->key[SDLK_UP].map=i;
+		jmap->key[SDLK_UP].player=1;
+		break;
+	    case GN_DOWN:
+		jmap->key[SDLK_DOWN].map=i;
+		jmap->key[SDLK_DOWN].player=1;
+		break;
+	    case GN_LEFT:
+		jmap->key[SDLK_LEFT].map=i;
+		jmap->key[SDLK_LEFT].player=1;
+		break;
+	    case GN_RIGHT:
+		jmap->key[SDLK_RIGHT].map=i;
+		jmap->key[SDLK_RIGHT].player=1;
+		break;
+	    case GN_SELECT_COIN:
+		jmap->key[SDLK_1].map=i;
+		jmap->key[SDLK_1].player=1;
+		break;
+	    /*case GN_MENU_KEY:
+		jmap->key[SDLK_RIGHT].map=i;
+		break;*/
+	    default:break;
+
+	}
+    }
+}
+
 
 #else
 bool create_joymap_from_string(int player,char *jconf) {
@@ -210,10 +271,15 @@ bool init_event(void) {
 			jmap->jhat[i]=calloc(SDL_JoystickNumHats(conf.joy[i]),sizeof(struct BUT_MAP));
 		}
 	}
-#endif //SDL_JOYSTICK_DISABLED	
+#endif //SDL_JOYSTICK_DISABLED
+
+#ifdef SYMBIAN
+
 	create_joymap_from_string(1,CF_STR(cf_get_item_by_name("p1control")));
-#ifndef SYMBIAN	
-	// not used on symbian
+	map_default_buttons();
+
+#else
+	create_joymap_from_string(1,CF_STR(cf_get_item_by_name("p1control")));
 	create_joymap_from_string(2,CF_STR(cf_get_item_by_name("p2control")));
 #endif // SYMBIAN
 	return true;

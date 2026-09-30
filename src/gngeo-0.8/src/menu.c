@@ -1590,8 +1590,8 @@ static int apply_control_changes(char* pcontrol)
 
     memset(controls, 0, 255);
     strcpy(controls, new_controls);
-    // controls = CF_STR(cf_get_item_by_name(pcontrol));
-    // printf("new controls %s len: %ld\n", controls, strlen(controls));
+    controls = CF_STR(cf_get_item_by_name(pcontrol));
+    //fprintf(stderr, "new controls: %s\n", controls);
     create_joymap_from_string(1,CF_STR(cf_get_item_by_name(pcontrol)));
     return 1;
 }
@@ -1666,6 +1666,7 @@ static void create_controls_menu(int p_num)
     }
 
     GN_MENU* menu = controls_menu[menu_idx];
+   
     while(i < SDLK_LAST)
     {
 	int p = jmap->key[i].player;

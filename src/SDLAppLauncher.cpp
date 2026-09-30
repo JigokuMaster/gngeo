@@ -38,8 +38,13 @@ extern TBool EPOC_SetupScreenOrientation()
     if (!appUi) return 0;
 
 
-    // always set landscape on 240x320.
-    TBool landscape = (appUi->ApplicationRect().Width() == 240) && (appUi->ApplicationRect().Height() == 320);
+    // always set landscape on 240x320 and 360x640
+    TBool landscape = ( 
+	    (( appUi->ApplicationRect().Width() == 240) && 
+	    (appUi->ApplicationRect().Height() == 320)) || 
+	    (( appUi->ApplicationRect().Width() == 360) && 
+	    (appUi->ApplicationRect().Height() == 640))
+	    );
 
     TRAPD(err, appUi->SetOrientationL( landscape? CAknAppUiBase::EAppUiOrientationLandscape : CAknAppUiBase::EAppUiOrientationPortrait));	
     return (err == KErrNone);

@@ -40,14 +40,8 @@ blitter_func blitter[] = {
 effect_func effect[] = {
 
 	{"none", "No effect", 1, 1, effect_none_init, NULL},
-	{"scanline", "Scanline effect", 2, 2, effect_scanline_init, effect_scanline_update}, // 1
-	{"scanline50", "Scanline 50% effect", 2, 2, effect_scanline_init, effect_scanline50_update}, // 2
-	{"scale2x", "Scale2x effect", 2, 2, effect_scale2x_init, effect_scale2x_update}, // 3
-	{"scale2x50", "Scale2x effect with 50% scanline", 2, 2, effect_scale2x_init, effect_scale2x50_update}, // 4
-	{"scale2x75", "Scale2x effect with 75% scanline", 2, 2, effect_scale2x_init, effect_scale2x75_update}, // 5
-	{"hq2x", "HQ2X effect. High quality", 2, 2, effect_hq2x_init, effect_hq2x_update}, // 6
-	{"lq2x", "LQ2X effect. Low quality", 2, 2, effect_lq2x_init, effect_lq2x_update}, // 7
-	{"doublex", "Double the x resolution (soft blitter only)", 2, 1, effect_scanline_init, effect_doublex_update}, //8
+	{"scale2x", "Scale2x effect", 2, 2, effect_scale2x_init, effect_scale2x_update}, 
+	{"doublex", "Double the x resolution (soft blitter only)", 2, 1, effect_scanline_init, effect_doublex_update},
 	{NULL, NULL, 0, 0, NULL, NULL}
 };
 #else
