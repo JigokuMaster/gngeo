@@ -2184,15 +2184,13 @@ void gn_init_menu(void) {
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 #endif
-#ifndef SYMBIAN 
-	// TODO: find why SDL_DOUBLEBUF crashes on Symbian.
-	gitem = gn_menu_create_item("Vsync", MENU_CHECK, toggle_vsync, NULL);
-	gitem->val = CF_BOOL(cf_get_item_by_name("vsync"));
-	option_menu->item = list_append(option_menu->item, (void*) gitem);
-	option_menu->nb_elem++;
-#endif
 	gitem = gn_menu_create_item("Auto Frame Skip", MENU_CHECK, toggle_autoframeskip, NULL);
 	gitem->val = CF_BOOL(cf_get_item_by_name("autoframeskip"));
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+#ifndef SYMBIAN 
+	gitem = gn_menu_create_item("Vsync", MENU_CHECK, toggle_vsync, NULL);
+	gitem->val = CF_BOOL(cf_get_item_by_name("vsync"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
 
@@ -2200,7 +2198,7 @@ void gn_init_menu(void) {
 	gitem->val = CF_BOOL(cf_get_item_by_name("sleepidle"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
-
+#endif
 	gitem = gn_menu_create_item("Show FPS", MENU_CHECK, toggle_showfps, NULL);
 	gitem->val = CF_BOOL(cf_get_item_by_name("showfps"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
