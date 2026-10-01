@@ -4,7 +4,7 @@ gcce
 PRJ_MMPFILES
 
 blitter.mmp
-effect.mmp
+//effect.mmp
 mamez80.mmp
 generator68k.mmp
 ym2610.mmp

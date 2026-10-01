@@ -629,7 +629,7 @@ bool cf_save_file(char *filename, int flags) {
 	sprintf(conf_file_dst, "%s.t", conf_file);
 
 	if ((f_dst = fopen(conf_file_dst, "w")) == 0) {
-		//printf("Unable to open %s\n",conf_file);
+		fprintf(stderr, "Unable to open %s\n",conf_file);
 		return false;
 	}
 

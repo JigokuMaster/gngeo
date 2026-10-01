@@ -118,8 +118,8 @@ void symbian_init()
 
 	   error = BaflUtils::CopyFile(rfs, source, target);
 	   if (error == KErrNone) puts("gngeorc copied\n");
-	   rfs.Close();
 	}
+       rfs.Close();
     }
 
     if (error != KErrNone) {
@@ -226,6 +226,51 @@ extern TBool EPOC_SetupScreenOrientation();
 bool symbian_setup_screenorientation()
 {
     return EPOC_SetupScreenOrientation();
+}
+
+// scaller/effect functions
+#include "screen.h"
+#include "video.h"
+
+SDL_bool symbian_effect_init() 
+{
+    return SDL_TRUE;
+}
+
+void symbian_effect_scanline_update()
+{
+   
+    int sX, sY, sW, sH;
+
+    sX = visible_area.x;
+    sY = visible_area.y;
+    sW = visible_area.w;
+    sH = visible_area.h;
+    FastStretchRectRGB565(
+        (Uint16*)buffer->pixels, buffer->pitch / 2,
+        sX, sY, sW, sH,
+        (Uint16*)screen->pixels, screen->pitch / 2,
+        0, 0, screen->w, screen->h,
+        1
+    );
+
+}
+
+void symbian_effect_scaler_update()
+{
+    int sX, sY, sW, sH;
+
+    sX = visible_area.x;
+    sY = visible_area.y;
+    sW = visible_area.w;
+    sH = visible_area.h;
+    FastStretchRectRGB565(
+        (Uint16*)buffer->pixels, buffer->pitch / 2,
+        sX, sY, sW, sH,
+        (Uint16*)screen->pixels, screen->pitch / 2,
+        0, 0, screen->w, screen->h,
+        0
+    );
 }
 
 

@@ -81,12 +81,10 @@ blitter_soft_init()
 
 	if (neffect != 0)
 	{
-	    screen_rect.w*=effect[neffect].x_ratio;
-	    screen_rect.h*=effect[neffect].y_ratio;
-	    if (screen_rect.w > width) screen_rect.w = 304;
-	    if (screen_rect.h > height) screen_rect.h = 224;
-	    screen_rect.x = SDL_abs(width-screen_rect.w) >> 1; 
-	    screen_rect.y = SDL_abs(height-screen_rect.h) >> 1; 
+	    screen_rect.x = 0;
+	    screen_rect.y = 0;
+	    screen_rect.w = width;
+	    screen_rect.h = height;
 	}
 
 	else{
@@ -96,8 +94,9 @@ blitter_soft_init()
 	    screen_rect.h = visible_area.h;
 	}
 
-	printf("screen resolution: %dx%d\n", width, height); 	
-	printf("neogen screen rect: %d,%d,%d,%d\n", screen_rect.x , screen_rect.y, screen_rect.w, screen_rect.h); 
+	printf("screen resolution: %dx%d\n", width, height); 
+	printf("neogeo screen rect: %d,%d,%d,%d\n", screen_rect.x , screen_rect.y, screen_rect.w, screen_rect.h); 
+	printf("neogeo visible_area : %d,%d,%d,%d\n", visible_area.x , visible_area.y, visible_area.w, visible_area.h); 
 #else
 	if (neffect!=0)	scale =1;
 	if (scale == 1) {
@@ -287,8 +286,8 @@ int threaded_blit(void *buf)
 #ifdef SYMBIAN
 void blitter_soft_update()
 {
-    SDL_BlitSurface(buffer, &visible_area, screen, &screen_rect); 
     SDL_UpdateRects(screen, 1, &screen_rect);
+    //SDL_UpdateRect(screen, 0,0,0,0);
 }
 
 #else

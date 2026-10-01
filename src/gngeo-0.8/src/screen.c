@@ -37,11 +37,12 @@ blitter_func blitter[] = {
 };
 
 #ifdef SYMBIAN
+#include "symbian_s60.h"
 effect_func effect[] = {
 
-	{"none", "No effect", 1, 1, effect_none_init, NULL},
-	{"scale2x", "Scale2x effect", 2, 2, effect_scale2x_init, effect_scale2x_update}, 
-	{"doublex", "Double the x resolution (soft blitter only)", 2, 1, effect_scanline_init, effect_doublex_update},
+	{"none", "No effect", 1, 1, symbian_effect_init, NULL},
+	{"scanline", "Scanline effect", 1, 1, symbian_effect_init, symbian_effect_scanline_update}, 
+	{"scale", "Scale to fit screen", 1, 1, symbian_effect_init, symbian_effect_scaler_update},
 	{NULL, NULL, 0, 0, NULL, NULL}
 };
 #else
