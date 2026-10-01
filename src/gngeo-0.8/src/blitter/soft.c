@@ -286,6 +286,11 @@ int threaded_blit(void *buf)
 #ifdef SYMBIAN
 void blitter_soft_update()
 {
+
+    if (neffect == 0 ) 
+    {
+	SDL_BlitSurface(buffer, &visible_area, screen, &screen_rect);
+    }
     SDL_UpdateRects(screen, 1, &screen_rect);
     //SDL_UpdateRect(screen, 0,0,0,0);
 }

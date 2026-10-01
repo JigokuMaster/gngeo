@@ -818,7 +818,7 @@ bool cf_open_file(char *filename) {
 		//printf("%s|%s|\n",name,val);
 		cf = cf_get_item_by_name(name);
 		if (cf && !(cf->flags & CF_SETBYCMD) && (!cf->modified)) {
-			printf("Option %s\n",cf->name);
+			//printf("Option %s\n",cf->name);
 			switch (cf->type) {
 				case CFT_INT:
 					CF_VAL(cf) = atoi(val);
