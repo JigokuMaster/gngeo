@@ -30,6 +30,12 @@
 ;You should change the source paths to match that of your environment
 ;<source> <destination>
 
+
+"..\src\gngeo-0.8\AUTHORS"-"" , FT, TA
+
+"..\src\gngeo-0.8\COPYING"-"", FT, TA
+
+
 "\epoc32\release\gcce\urel\gngeo.exe"-"!:\sys\bin\gngeo.exe"
 
 "\epoc32\data\z\private\10003a3f\apps\gngeo_reg.rsc"	-"!:\private\10003a3f\import\apps\gngeo_reg.rsc"
