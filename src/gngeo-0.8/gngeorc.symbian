@@ -3,35 +3,18 @@
 # Where your rom (and bios) are?
 rompath ./roms
 
-# soft
-# opengl
-# yuv
 blitter soft
 
-# scanline
-# scanline50
-# scale2x
-# scale2x50
-# scale2x75
-# doublex
 effect none
 
-# Enable the raster interrupt?
-raster false
-
-
-# Have interpolation?
-interpolation false
-
 # Have sound?
-sound false
+sound true
 
 # Shown FPS
 showfps false
 
 # autoframeskip control
 autoframeskip false
-sleepidle false
 
 # enable joystick support ?
 joystick false
@@ -39,15 +22,13 @@ joystick false
 # enable the 68k inline debuger? (disable the sound)
 debug false
 
-hwsurface false
-
 # Convert all tile at loading time (insted on the fly)
 
 # Use PAL timing? (buggy)
 pal false
 
 # Sample rate
-samplerate 22050
+samplerate 11025
 
 # country?
 # japan, usa, europe

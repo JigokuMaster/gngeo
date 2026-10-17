@@ -262,7 +262,7 @@ static const struct { GNGEO_BUTTON b; SDLKey key; } default_keys[] = {
 	{GN_START, SDLK_5}, {GN_START, SDLK_RETURN},
 	{GN_UP, SDLK_UP}, {GN_DOWN, SDLK_DOWN}, {GN_LEFT, SDLK_LEFT}, {GN_RIGHT, SDLK_RIGHT},
 	{GN_SELECT_COIN, SDLK_1},
-	{GN_SAVESTATE, SDLK_s}, {GN_LOADSTATE, SDLK_l},
+	/*{GN_SAVESTATE, SDLK_s}, {GN_LOADSTATE, SDLK_l},*/
 };
 
 static bool button_has_default(GNGEO_BUTTON b)
