@@ -43,6 +43,7 @@
 #include "screen.h"
 #include "video.h"
 #include "event.h"
+#include "keymap.h"
 #include "state.h"
 #include "emu.h"
 #include "frame_skip.h"
@@ -681,7 +682,7 @@ int pbar_anim_thread(void *data) {
 	while (p->running) {
 		draw_back();
 		draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y + 150, p->name);
-		draw_string(menu_buf, sfont, MENU_TITLE_X, MENU_TITLE_Y + 165, "Please wait!");
+		draw_string(menu_buf, sfont, MENU_TITLE_X, MENU_TITLE_Y + 165, "please wait!");
 
 		SDL_BlitSurface(gngeo_logo, NULL, pbar_logo, NULL);
 
@@ -789,7 +790,6 @@ int gn_popup_question(char *name, char *fmt, ...) {
 
 			//effect_menu->draw(effect_menu); //frame_skip(0);printf("fps: %s\n",fps_str);
 		if ((a = yesno_menu->event_handling(yesno_menu)) >= 0) {
-			printf("return %d\n",a);
 			return a;
 		}
 
@@ -1012,7 +1012,7 @@ static int load_state_action(GN_MENU_ITEM *self, void *param) {
 			case GN_C:
 				SDL_FreeSurface(slot_img);
 				load_state(conf.game, slot);
-				printf("Load state!!\n");
+				//printf("Load state!!\n");
 				return MENU_RETURNTOGAME;
 				break;
 			default:
@@ -1087,7 +1087,7 @@ static int save_state_action(GN_MENU_ITEM *self, void *param) {
 			case GN_C:
 				SDL_FreeSurface(slot_img);
 				save_state(conf.game, slot);
-				printf("Save state!!\n");
+				//printf("Save state!!\n");
 				return MENU_RETURNTOGAME;
 				break;
 			default:
@@ -1312,10 +1312,9 @@ static int loadrom_action(GN_MENU_ITEM *self, void *param) {
 	close_game();
 	if (conf.sound) close_sdl_audio();
 
-	if (init_game(game) != true) {
-		printf("Can't init %s...\n", game);
-		gn_popup_error("Error! :", "Gngeo Couldn't init %s: \n\n%s\n"
-				"Maybe the romset you're using is too old"
+	if (!init_game(game)) {
+		gn_popup_error("Error! :", "GnGeo Couldn't load %s: \n\n%s\n"
+				"Also make sure you're using a compatible gno/zip ROM"
 				, game,romerror);
 		return MENU_STAY;
 	}
@@ -1340,14 +1339,57 @@ static int scan_romdir()
     return n;
 }
 
+static bool add_zip_rom(char* filename, size_t  filename_len, int i)
+{
+
+
+    struct stat filestat;
+    if (!gn_rom_path(filename, filename_len, romlist[i], ".zip")) return false;
+
+    if (stat(filename, &filestat) == 0 && S_ISREG(filestat.st_mode))
+    {
+	ROM_DEF* drv = dr_check_zip(romlist[i]);
+	if ( !drv ) return false;  
+	rbrowser_menu->item = list_insert_sort(rbrowser_menu->item, (void*) gn_menu_create_item(drv->longname, MENU_ACTION, loadrom_action, strdup(drv->name)),romnamesort);
+	rbrowser_menu->nb_elem++;
+	free(drv);
+	return true;
+    }
+    return false;
+}
+
+static bool add_gno_rom(char* filename, size_t  filename_len, int i)
+{
+
+    struct stat filestat;
+    if (!gn_rom_path(filename, filename_len, romlist[i], ".gno")) return false;
+
+    if (stat(filename, &filestat) == 0 && S_ISREG(filestat.st_mode))
+    {
+
+	ROM_DEF* drv = res_load_drv(romlist[i]);
+	if ( drv != NULL)
+	{
+	    rbrowser_menu->item = list_insert_sort(rbrowser_menu->item, (void*) gn_menu_create_item(drv->longname, MENU_ACTION, loadrom_action, strdup(filename)), romnamesort);
+	    rbrowser_menu->nb_elem++;
+	    free(drv);
+	}	
+	return true;
+    }
+    return false;
+
+}
+
+
 void init_rom_browser_menu(void) {
-	int i;
-	char filename[strlen(CF_STR(cf_get_item_by_name("rompath"))) + 256];
-	struct stat filestat;
-	ROM_DEF *drv = NULL;
-	//char name[32];
+	
+	//char filename[strlen(CF_STR(cf_get_item_by_name("rompath"))) + 256];
+
+	char filename[512];
+	
 	static int nb_roms = 0;
 	static int nb_files = 0;
+	
 	if(rbrowser_menu != NULL)
 	{
 	    int n = scan_romdir();
@@ -1366,43 +1408,14 @@ void init_rom_browser_menu(void) {
 	}
 
 	rbrowser_menu = create_menu("Load Game", MENU_SMALL, NULL, NULL);
-	i = 0;
-	while (romlist[i]) {
-		sprintf(filename, "%s/%s.zip", CF_STR(cf_get_item_by_name("rompath")), romlist[i]);
-		if (stat(filename, &filestat) == 0 && S_ISREG(filestat.st_mode)) {
-			if ((drv = dr_check_zip(filename)) != NULL) {
-				rbrowser_menu->item = list_insert_sort(rbrowser_menu->item,
-						(void*) gn_menu_create_item(drv->longname, MENU_ACTION, loadrom_action, strdup(drv->name)),
-						romnamesort
-						);
-				rbrowser_menu->nb_elem++;
+	
+	int i = 0;
+	while (romlist[i]) 
+	{
+	    if (add_zip_rom(filename, sizeof(filename), i)) nb_roms++;
 
-
-				//printf("Parent=%s\n",drv->parent);
-				//if (strcmp(drv->parent,"neogeo")!=0)
-				//	gn_menu_disable_item(rbrowser_menu,drv->longname);
-
-				free(drv);
-				nb_roms++;
-				i++;
-				continue;
-			}
-		}
-
-		sprintf(filename, "%s/%s.gno", CF_STR(cf_get_item_by_name("rompath")), romlist[i]);
-		if (stat(filename, &filestat) == 0 && S_ISREG(filestat.st_mode)) {
-			char *gnoname = dr_gno_romname(filename);
-			if (gnoname != NULL && ((drv = res_load_drv(gnoname)) != NULL) ) {
-				rbrowser_menu->item = list_insert_sort(rbrowser_menu->item,
-						(void*) gn_menu_create_item(drv->longname, MENU_ACTION, loadrom_action, strdup(filename)),
-						romnamesort);
-				rbrowser_menu->nb_elem++;
-				nb_roms++;
-				free(drv);
-			}
-			free(gnoname);
-		}
-		i++;
+	    if (add_gno_rom(filename, sizeof(filename), i)) nb_roms++;
+	    i++;
 	}
 
 	if (nb_roms == 0) {    
@@ -1432,7 +1445,9 @@ int rom_browser_menu(void) {
 	}
 
 	while (1) {
-		rbrowser_menu->draw(rbrowser_menu); //frame_skip(0);printf("fps: %s\n",fps_str);
+
+		rbrowser_menu->draw(rbrowser_menu); 
+
 		if ((a = rbrowser_menu->event_handling(rbrowser_menu)) > 0) {
 			if (a == MENU_CLOSE)
 				return MENU_STAY;
@@ -1507,179 +1522,300 @@ static int toggle_fullscreen(GN_MENU_ITEM *self, void *param) {
 }
 
 
-static GN_MENU *controls_menu[2] = {NULL, NULL};
+/* ------------------------------------------------------------------ */
+/* Controls editor                                                     */
+/*                                                                     */
+/* The menu is only a *view* of the keymap (keymap.h): one row per     */
+/* binding, plus one "unmapped" row for every button without a key.    */
+/* Rows are rebuilt from the keymap after each change, so nothing has  */
+/* to be parsed back out of the menu strings.                          */
+/* ------------------------------------------------------------------ */
 
-static char* gngeo_keynames[] = {
-    "NONE",
-    "A",
-    "B",
-    "C",
-    "D",
-    "UP",
-    "DOWN",
-    "LEFT",
-    "RIGHT",
-    "START",
-    "COIN",
-    "MENU",
-    "HOTKEY1",
-    "HOTKEY2",
-    "HOTKEY3",
-    "HOTKEY4",
-    "pNcontrol"
-};
+#define CTRL_FIRST_BUTTON GN_A
+#define CTRL_LAST_BUTTON  GN_MENU_KEY      /* hotkeys are not used here */
+#define CTRL_MAX_ROWS     (KM_MAX_BINDINGS + GN_MAX_KEY)
+#define CTRL_CANCEL       (-1)
 
-static int apply_control_changes(char* pcontrol)
+typedef struct CtrlRow {
+    int player;            /* KM_P1 / KM_P2 */
+    GNGEO_BUTTON button;
+    int key;               /* SDL key code, -1 = button has no key */
+} CtrlRow;
+
+static GN_MENU     *controls_menu[2] = {NULL, NULL};
+static CtrlRow      ctrl_rows[2][CTRL_MAX_ROWS];
+static int          ctrl_changed[2] = {0, 0};
+static GNGEO_BUTTON ctrl_picked = GN_NONE;
+
+static int edit_control_action(GN_MENU_ITEM *self, void *param);
+static int add_control_action(GN_MENU_ITEM *self, void *param);
+static int remove_control_action(GN_MENU_ITEM *self, void *param);
+
+static int ctrl_player(int p_num)
 {
-    char* controls = CF_STR(cf_get_item_by_name(pcontrol));
-    /* 255 bytes see CONF_ITEM.data.str in conf.h */
-    char new_controls[255] = {0,};
-    //printf("current controls %s len: %ld\n", controls, strlen(controls));
-    int menu_idx = (strcmp(pcontrol, "p1control")==0) ? 0:1;
-    GN_MENU* menu = controls_menu[menu_idx]; 
-    LIST* item = menu->item;  
-    int i = 0;
-    int ret = 1;
-    /* parsing menu items of Controls option. */
-    while((item != NULL) && (i < menu->nb_elem))
+    return (p_num == 1) ? KM_P1 : KM_P2;
+}
+
+/* Free the items of a menu but keep the menu itself. */
+static void controls_menu_free_items(GN_MENU *menu)
+{
+    LIST *l = menu->item;
+    LIST *tmp;
+    while (l != NULL)
     {
-	 
-	GN_MENU_ITEM *mi = (GN_MENU_ITEM *)item->data;
-	if(mi == NULL)
-	{
-	    return 0;
-	}
-
-	char* item_str = strdup(mi->name);
-	if(item_str == NULL)
-	{
-	    return 0;
-	}
-
-	/* MENU item: GN_BUTTON Kcode [KEYNAME] */
-	char* sep1 = strchr(item_str, ' ');
-	if(sep1 == NULL)
-	{
-	    free(item_str);
-	    return 0;
-	}
-
-	/* GN_BUTTON=Kcode[KEYNAME] */
-	*sep1 = '=';
-	/* find []*/
-	char* sep2 = strchr(item_str, '['); 
-	if(sep2 == NULL)
-	{
-	    free(item_str);
-	    return 0;
-	}
-
-	sep2--; // space before []
-	*sep2 = '\0';
-	/* GN_BUTTON=Kcode */
-	strcat(new_controls, item_str);
-	if(i < (menu->nb_elem)-1)
-	{
-	    /* GN_BUTTON=Kcode,*/
-	    strcat(new_controls, ",");
-	}  	
-	item = item->next;
-	i++;
-	free(item_str);
+	gn_menu_free_item((GN_MENU_ITEM *)l->data);
+	tmp = l;
+	l = l->next;
+	free(tmp);
     }
+    menu->item = NULL;
+    menu->nb_elem = 0;
+}
 
-    memset(controls, 0, 255);
-    strcpy(controls, new_controls);
-    controls = CF_STR(cf_get_item_by_name(pcontrol));
-    //fprintf(stderr, "new controls: %s\n", controls);
-    create_joymap_from_string(1,CF_STR(cf_get_item_by_name(pcontrol)));
-    return 1;
+/* Rebuild the menu rows from the keymap. */
+static void controls_menu_rebuild(int p_num)
+{
+    int idx = p_num - 1;
+    int player = ctrl_player(p_num);
+    GN_MENU *menu = controls_menu[idx];
+    SDLKey keys[KM_MAX_BINDINGS];
+    char text[96];
+    int nrows = 0;
+    int b, k, n;
+    int current = menu->current;
+
+    controls_menu_free_items(menu);
+
+    for (b = CTRL_FIRST_BUTTON; b <= CTRL_LAST_BUTTON; b++)
+    {
+	n = keymap_keys_for_button(player, (GNGEO_BUTTON)b, keys, KM_MAX_BINDINGS);
+	/* a button without keys still gets one row, so it can be assigned */
+	for (k = 0; k < (n > 0 ? n : 1) && nrows < CTRL_MAX_ROWS; k++)
+	{
+	    CtrlRow *row = &ctrl_rows[idx][nrows++];
+	    row->player = player;
+	    row->button = (GNGEO_BUTTON)b;
+	    row->key = (n > 0) ? (int)keys[k] : -1;
+	    snprintf(text, sizeof(text), "%s: %s", keymap_button_label(row->button),
+		     (row->key >= 0) ? keymap_key_name((SDLKey)row->key) : "-");
+	    gn_menu_add_item(menu, text, MENU_ACTION, edit_control_action, (void *)row);
+	}
+    }
+    gn_menu_add_item(menu, "Add another key ...", MENU_ACTION, add_control_action, (void *)p_num);
+    gn_menu_add_item(menu, "Remove a key ...", MENU_ACTION, remove_control_action, (void *)p_num);
+
+    if (current >= menu->nb_elem) current = menu->nb_elem - 1;
+    if (current < 0) current = 0;
+    menu->current = current;
+}
+
+/* Write the keymap back into the "pNcontrol" config string (255 bytes, see CONF_ITEM in conf.h). */
+static void controls_sync_config(int p_num)
+{
+    char *dst = CF_STR(cf_get_item_by_name((p_num == 1) ? "p1control" : "p2control"));
+    keymap_serialize(ctrl_player(p_num), dst, 255);
 }
 
 static void save_control_changes(char* pcontrol)
 {
-
     cf_item_has_been_changed(cf_get_item_by_name(pcontrol));
     cf_save_file(NULL, 0);
 }
 
-static int setup_ctrlkey_action(GN_MENU_ITEM *self, void *param)
+/* Wait for the user to press a key.
+ * Returns an SDL key code, or CTRL_CANCEL (ESC / BACKSPACE / nothing picked). */
+static int ctrl_capture_key(const char *title, int current)
 {
     SDL_Event event;
-    int controls_changed = 0;
-    char* keyname = (char*)self->arg;
-    char* pcontrol = gngeo_keynames[16];   
-    char* item_str = strdup(self->name); // save the original item string
-    //printf("keyname: %s\n", keyname);
-    //printf("pcontrol: %s\n", pcontrol); 
-    int menu_idx = (strcmp(pcontrol, "p1control")==0) ? 0:1;
-    GN_MENU* menu = controls_menu[menu_idx];    
-    menu->title = "press ENTER to save";
-    while (SDL_WaitEvent(&event))
-    {
-	if(event.type == SDL_KEYDOWN)
-	{
-	    int keycode = event.key.keysym.sym;
-	    switch (keycode)
-	    {
+    int selected = -1;
+    char msg[160];
 
-		case SDLK_RETURN:
-		    free(item_str);
-		    // save controls 
-		    if(controls_changed){
-			apply_control_changes(pcontrol);
-			return 2;
-		    }		
-		    return MENU_STAY;	
-		case SDLK_ESCAPE:
-		case SDLK_BACKSPACE:
-		    //reset original item string
-		    sprintf(self->name, "%s", item_str);
-		    free(item_str);
-		    return MENU_STAY;
-		case SDLK_HOME:
-		    // ignore CALL/GREEN Key, used for taking screenshots
-		    break;
-		default:
-		    controls_changed = 1;
-		    sprintf(self->name, "%s K%d [%s]", keyname, keycode, SDL_GetKeyName(keycode));
-		    menu->draw(menu);
-		    break;
-	    }
-	}	    
+    reset_event();
+    for (;;)
+    {
+	snprintf(msg, sizeof(msg), "Current key: %s\nNew key: %s\n\n"
+		 "Press a key, then ENTER to save\n"
+		 "ESC / BACKSPACE = cancel",
+		 (current >= 0) ? keymap_key_name((SDLKey)current) : "none",
+		 (selected >= 0) ? keymap_key_name((SDLKey)selected) : "-");
+	draw_back();
+	draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, (char *)title);
+	draw_string(menu_buf, sfont, MENU_TEXT_X, MENU_TEXT_Y + 20, msg);
+	SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+	screen_update();
+
+	do {
+	    if (!SDL_WaitEvent(&event)) return CTRL_CANCEL;
+	} while (event.type != SDL_KEYDOWN);
+
+	switch (event.key.keysym.sym)
+	{
+	    case SDLK_RETURN:
+		reset_event();
+		return (selected >= 0) ? selected : CTRL_CANCEL;
+	    case SDLK_ESCAPE:
+	    case SDLK_BACKSPACE:   /* back/cancel, as in the rest of the menu (E6 has no softkeys) */
+		reset_event();
+		return CTRL_CANCEL;
+	    case SDLK_HOME:
+		break;   /* CALL/GREEN key is used for screenshots */
+	    default:
+		selected = event.key.keysym.sym;
+		break;
+	}
+    }
+}
+
+/* Change, assign or clear the key of one row. */
+static int edit_control_action(GN_MENU_ITEM *self, void *param)
+{
+    CtrlRow *row = (CtrlRow *)self->arg;
+    int p_num = (row->player == KM_P1) ? 1 : 2;
+    int idx = p_num - 1;
+    int sel = ctrl_capture_key(keymap_button_label(row->button), row->key);
+    int changed = 0;
+
+    if (sel == CTRL_CANCEL) return MENU_STAY;
+
+    if (sel != row->key)
+    {
+	if (row->key >= 0) keymap_remove(row->player, row->button, row->key);
+	if (keymap_add(row->player, row->button, (SDLKey)sel))
+	{
+	    changed = 1;
+	}
+	else
+	{
+	    /* exact duplicate (button already has this key) or table full: restore */
+	    if (row->key >= 0) keymap_add(row->player, row->button, (SDLKey)row->key);
+	    gn_popup_info("Controls", "Can't assign %s to %s",
+			  keymap_key_name((SDLKey)sel), keymap_button_label(row->button));
+	}
     }
 
-    free(item_str);
+    if (changed)
+    {
+	ctrl_changed[idx] = 1;
+	controls_sync_config(p_num);
+	controls_menu_rebuild(p_num);   /* frees 'self': don't touch it after this */
+    }
+    return MENU_STAY;
+}
+
+static int pick_button_action(GN_MENU_ITEM *self, void *param)
+{
+    ctrl_picked = (GNGEO_BUTTON)(int)self->arg;
+    return MENU_CLOSE;
+}
+
+/* Add a second (third, ...) key to any button: pick the button, then press the key. */
+static int add_control_action(GN_MENU_ITEM *self, void *param)
+{
+    int p_num = (int)self->arg;
+    int idx = p_num - 1;
+    int player = ctrl_player(p_num);
+    GN_MENU *pick = create_menu("Add key for ...", MENU_SMALL, NULL, NULL);
+    int b, sel;
+
+    for (b = CTRL_FIRST_BUTTON; b <= CTRL_LAST_BUTTON; b++)
+	gn_menu_add_item(pick, (char *)keymap_button_label((GNGEO_BUTTON)b), MENU_ACTION,
+			 pick_button_action, (void *)b);
+
+    ctrl_picked = GN_NONE;
+    while (1)
+    {
+	pick->draw(pick);
+	if (pick->event_handling(pick) > 0) break;
+    }
+    free_menu_items(pick);
+
+    if (ctrl_picked == GN_NONE) return MENU_STAY;
+
+    sel = ctrl_capture_key(keymap_button_label(ctrl_picked), -1);
+    if (sel < 0) return MENU_STAY;
+
+    if (keymap_add(player, ctrl_picked, (SDLKey)sel))
+    {
+	ctrl_changed[idx] = 1;
+	controls_sync_config(p_num);
+	controls_menu_rebuild(p_num);   /* frees 'self': don't touch it after this */
+    }
+    else
+    {
+	gn_popup_info("Controls", "%s already has the key %s",
+		      keymap_button_label(ctrl_picked), keymap_key_name((SDLKey)sel));
+    }
+    return MENU_STAY;
+}
+
+static CtrlRow  ctrl_remove_rows[KM_MAX_BINDINGS];
+static CtrlRow *ctrl_remove_picked = NULL;
+
+static int pick_remove_action(GN_MENU_ITEM *self, void *param)
+{
+    ctrl_remove_picked = (CtrlRow *)self->arg;
+    return MENU_CLOSE;
+}
+
+/* Remove one key: pick it from the list of the current bindings, then confirm. */
+static int remove_control_action(GN_MENU_ITEM *self, void *param)
+{
+    int p_num = (int)self->arg;
+    int idx = p_num - 1;
+    int player = ctrl_player(p_num);
+    GN_MENU *pick;
+    char text[96];
+    int i, n = 0;
+
+    for (i = 0; i < keymap_count() && n < KM_MAX_BINDINGS; i++)
+    {
+	const KeyBinding *kb = keymap_get(i);
+	if (kb == NULL || !(kb->player & player)) continue;
+	ctrl_remove_rows[n].player = player;
+	ctrl_remove_rows[n].button = kb->button;
+	ctrl_remove_rows[n].key = (int)kb->key;
+	n++;
+    }
+    if (n == 0) return MENU_STAY;
+
+    pick = create_menu("Remove key ...", MENU_SMALL, NULL, NULL);
+    for (i = 0; i < n; i++)
+    {
+	snprintf(text, sizeof(text), "%s: %s", keymap_button_label(ctrl_remove_rows[i].button),
+		 keymap_key_name((SDLKey)ctrl_remove_rows[i].key));
+	gn_menu_add_item(pick, text, MENU_ACTION, pick_remove_action, (void *)&ctrl_remove_rows[i]);
+    }
+
+    ctrl_remove_picked = NULL;
+    while (1)
+    {
+	pick->draw(pick);
+	if (pick->event_handling(pick) > 0) break;
+    }
+    free_menu_items(pick);
+
+    if (ctrl_remove_picked == NULL) return MENU_STAY;
+
+    if (gn_popup_question("Remove key", "Remove the selected key?") == 2)
+    {
+	if (keymap_remove(ctrl_remove_picked->player, ctrl_remove_picked->button, ctrl_remove_picked->key))
+	{
+	    ctrl_changed[idx] = 1;
+	    controls_sync_config(p_num);
+	    controls_menu_rebuild(p_num);   /* frees 'self': don't touch it after this */
+	}
+    }
     return MENU_STAY;
 }
 
 static void create_controls_menu(int p_num)
 {
-    int i = 0;
-    char control[64] = {0};
-    char* menu_title = "press ENTER to edit";
-    char* pcontrol = (p_num==1) ?  "p1control" : "p2control";
-    int menu_idx = p_num-1;
-    if(controls_menu[menu_idx] == NULL)
+    int idx = p_num - 1;
+    if (controls_menu[idx] == NULL)
     {
-	controls_menu[menu_idx] = create_menu(menu_title, MENU_SMALL, NULL, NULL);
+	controls_menu[idx] = create_menu("ENTER: edit key", MENU_SMALL, NULL, NULL);
     }
-
-    GN_MENU* menu = controls_menu[menu_idx];
-   
-    while(i < SDLK_LAST)
-    {
-	int p = jmap->key[i].player;
-	int k = jmap->key[i].map;
-	i++; 
-	if(p != p_num || k == 0)
-	{
-	    continue;
-	}
-	sprintf(control, "%s K%d [%s]", gngeo_keynames[k], i-1, SDL_GetKeyName(i-1));
-	menu->item = list_append(menu->item,(void*) gn_menu_create_item(control, MENU_ACTION, setup_ctrlkey_action, (void*)gngeo_keynames[k]));
-	menu->nb_elem++;
-    }
+    /* rows are (re)built from the keymap every time the editor opens, see setup_controls() */
 }
 
 
@@ -1697,7 +1833,7 @@ static int toggle_menu_anim(GN_MENU_ITEM *self, void *param)
 /*static int toggle_landscapemode(GN_MENU_ITEM *self, void *param)
 {
     int ret = symbian_setup_screenorientation();
-    gn_popup_info("config changed", "Please restart the emulator.");
+    gn_popup_info("config changed", "please restart the emulator.");
     self->val = ret;//self->val;   
     return MENU_STAY;
 }
@@ -1764,30 +1900,23 @@ static int change_audio_volume(GN_MENU_ITEM *self, void *param)
 
 static int setup_controls(GN_MENU_ITEM *self, void *param)
 {
- 	int i = 0;   
-	int controls_changed = 0;
-	int p_num = (strcmp(self->str, "P2")==0) ? 2 :1;
-	char* pcontrol = (p_num==1) ?  "p1control" : "p2control";
-	gngeo_keynames[16] = pcontrol; // set current player controls id
-	//printf("pcontrol: %s\n", pcontrol);
-	int menu_idx = p_num - 1;
-	GN_MENU* menu = controls_menu[menu_idx]; 
+	int p_num = (strcmp(self->str, "P2")==0) ? 2 : 1;
+	int idx = p_num - 1;
+	char* pcontrol = (p_num==1) ? "p1control" : "p2control";
+	GN_MENU* menu = controls_menu[idx];
+
+	ctrl_changed[idx] = 0;
+	controls_menu_rebuild(p_num);   /* always show the current keymap */
 	while(1)
 	{
-	    menu->title = "press ENTER to edit";
 	    menu->draw(menu);
-	    switch(menu->event_handling(menu))
+	    if(menu->event_handling(menu) > 0)   /* ESC / back */
 	    {
-		case 1: // SDLK_ESCAPE
-		    if(controls_changed && gn_popup_question("Save Changes", "save to the config file?") == 2)
-		    {
-			save_control_changes(pcontrol);
-		    }
-		    return MENU_STAY;
-		case 2:
-		    //printf("controls_changed\n");
-		    controls_changed = 1;    
-		    break;
+		if(ctrl_changed[idx] && gn_popup_question("Save Changes", "save to the config file?") == 2)
+		{
+		    save_control_changes(pcontrol);
+		}
+		return MENU_STAY;
 	    }
 	}
 	return MENU_STAY;
@@ -1814,12 +1943,82 @@ static int toggle_vsync(GN_MENU_ITEM *self, void *param) {
 }
 #endif
 
+/* ---- manual frame skip row ("auto" / "off" / 1..MANUAL_FRAMESKIP_MAX) ---- */
+static char frameskip_str[8];
+
+static void update_frameskip_item(void) {
+	GN_MENU_ITEM *gitem = gn_menu_get_item_by_name(option_menu, "Frame Skip");
+	if (conf.autoframeskip)
+		strcpy(frameskip_str, "auto");
+	else if (conf.frameskip == 0)
+		strcpy(frameskip_str, "off");
+	else
+		sprintf(frameskip_str, "%d", (int)conf.frameskip);
+	if (gitem) gitem->str = frameskip_str;
+}
+
+static int change_frameskip(GN_MENU_ITEM *self, void *param) {
+	SDL_Event event;
+	int old_val = conf.frameskip;
+	int current_val = old_val;
+	char msg[100];
+
+	if (conf.autoframeskip) {
+		gn_popup_info("Frame Skip", "Turn off Auto Frame Skip first.");
+		return MENU_STAY;
+	}
+	sprintf(msg, "current value %d (0 = off), use UP/DOWN, ENTER to save.", current_val);
+	reset_event();
+	draw_back();
+	draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, "Frame Skip");
+	draw_string(menu_buf, sfont, ALIGN_CENTER, ALIGN_CENTER, msg);
+	SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+	screen_update();
+
+	while (SDL_WaitEvent(&event)) {
+		if (event.type == SDL_KEYDOWN) {
+			switch (event.key.keysym.sym) {
+			case SDLK_UP:
+				current_val = SDL_min(MANUAL_FRAMESKIP_MAX, current_val + 1);
+				break;
+			case SDLK_DOWN:
+				current_val = SDL_max(0, current_val - 1);
+				break;
+			case SDLK_ESCAPE:
+			case SDLK_BACKSPACE:
+				update_frameskip_item();
+				return MENU_STAY;
+			case SDLK_RETURN:
+				if (current_val != old_val) {
+					CONF_ITEM *cf_item = cf_get_item_by_name("frameskip");
+					conf.frameskip = (Uint8) current_val;
+					CF_VAL(cf_item) = current_val;
+					cf_item_has_been_changed(cf_item);
+					reset_frame_skip();
+				}
+				update_frameskip_item();
+				return MENU_STAY;
+			default:
+				break;
+			}
+			sprintf(msg, "current value %d (0 = off), use UP/DOWN, ENTER to save.", current_val);
+			draw_back();
+			draw_string(menu_buf, mfont, MENU_TITLE_X, MENU_TITLE_Y, "Frame Skip");
+			draw_string(menu_buf, sfont, ALIGN_CENTER, ALIGN_CENTER, msg);
+			SDL_BlitSurface(menu_buf, NULL, buffer, NULL);
+			screen_update();
+		}
+	}
+	return MENU_STAY;
+}
+
 static int toggle_autoframeskip(GN_MENU_ITEM *self, void *param) {
 	self->val = 1 - self->val;
 	conf.autoframeskip = self->val;
 	cf_item_has_been_changed(cf_get_item_by_name("autoframeskip"));
 	CF_BOOL(cf_get_item_by_name("autoframeskip")) = self->val;
 	reset_frame_skip();
+	update_frameskip_item();
 	return MENU_STAY;
 }
 
@@ -1901,11 +2100,10 @@ static int change_samplerate_action(GN_MENU_ITEM *self, void *param) {
 		conf.sound = 1;
 		CF_BOOL(cf_get_item_by_name("sound")) = 1;
 		conf.sample_rate = rate;
-		//init_sdl_audio();
-		//YM2610ChangeSamplerate(conf.sample_rate);
 		if(!neo_sound_initialized)
 		{
-		    gn_popup_info("config changed", "Please reload the game.");
+		    if( conf.game!=NULL ) gn_popup_info("audio config changed", "please reload the game.");
+		    
 		    return MENU_CLOSE;
 		}
 
@@ -2075,6 +2273,7 @@ static void reset_menu_option(void) {
 	RESET_BOOL("Fullscreen","fullscreen");
 	RESET_BOOL("Vsync","vsync");
 	RESET_BOOL("Auto Frame Skip","autoframeskip");
+	update_frameskip_item();
 	RESET_BOOL("Sleep while idle","sleepidle");
 	RESET_BOOL("Show FPS","showfps");
 #ifdef PANDORA
@@ -2188,7 +2387,13 @@ void gn_init_menu(void) {
 	gitem->val = CF_BOOL(cf_get_item_by_name("autoframeskip"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
-#ifndef SYMBIAN 
+
+	gitem = gn_menu_create_item("Frame Skip", MENU_LIST, change_frameskip, NULL);
+	gitem->str = frameskip_str;
+	option_menu->item = list_append(option_menu->item, (void*) gitem);
+	option_menu->nb_elem++;
+	update_frameskip_item();
+#ifndef SYMBIAN
 	gitem = gn_menu_create_item("Vsync", MENU_CHECK, toggle_vsync, NULL);
 	gitem->val = CF_BOOL(cf_get_item_by_name("vsync"));
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
@@ -2213,7 +2418,7 @@ void gn_init_menu(void) {
 	gitem = gn_menu_create_item("Audio Volume", MENU_LIST, change_audio_volume, NULL);
 	int saved_vol = CF_VAL(cf_get_item_by_name("audio_volume"));
 	symbian_audio_volume_set(saved_vol, 0);
-	sprintf(audio_vol, "%d", symbian_audio_volume_get());
+	sprintf(audio_vol, "%d", saved_vol);
 	gitem->str = audio_vol;
 	option_menu->item = list_append(option_menu->item, (void*) gitem);
 	option_menu->nb_elem++;
@@ -2272,7 +2477,7 @@ Uint32 run_menu(void) {
 
 #ifdef SYMBIAN
 	// FIX: mute audio when game is paused.
-	if(conf.sound)
+	if(conf.game && conf.sound)
 	{
 	    symbian_audio_mute();
 	}    
@@ -2301,7 +2506,7 @@ Uint32 run_menu(void) {
 		{
 #ifdef SYMBIAN
 		    // reset audio volume.
-		    if(conf.sound)
+		    if(conf.game && conf.sound)
 		    {
 			symbian_audio_volume_set(symbian_audio_volume_get(), 0);
 		    }    

@@ -1,1 +1,15 @@
-//#define USE_ASM_CORES 1
+
+
+#define USE_ASM_CORES 1
+
+MACRO SYMBIAN
+MACRO OPENC
+MACRO ASM
+MACRO HAVE_CONFIG_H
+MACRO USE_SYMBIAN_AUDIOSTREAM
+
+OPTION GCCE -O3 -ftracer -fomit-frame-pointer -mno-apcs-frame -Wno-unused
+
+ALWAYS_BUILD_AS_ARM
+
+

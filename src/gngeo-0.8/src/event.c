@@ -10,148 +10,30 @@
 #include "conf.h"
 #include "emu.h"
 #include "memory.h"
+#include "keymap.h"
 #ifdef SYMBIAN
 #include "symbian_s60.h"
 #endif
 
+/* Globals (declared extern in event.h) */
+JOYMAP *jmap = NULL;
+Uint8 joy_state[2][GN_MAX_KEY];
+
+#ifndef SYMBIAN
+/* Button name -> id (joystick parser). Name table lives in keymap.c */
 static int get_mapid(char *butid) {
-	// printf("Get mapid %s\n",butid);
-	if (!strcmp(butid,"A")) return GN_A;
-	if (!strcmp(butid,"B")) return GN_B;
-	if (!strcmp(butid,"C")) return GN_C;
-	if (!strcmp(butid,"D")) return GN_D;
-
-	if (!strcmp(butid,"UP")) return GN_UP;
-	if (!strcmp(butid,"DOWN")) return GN_DOWN;
-	if (!strcmp(butid,"UPDOWN")) return GN_UP;
-
-	if (!strcmp(butid,"LEFT")) return GN_LEFT;
-	if (!strcmp(butid,"RIGHT")) return GN_RIGHT;
-	if (!strcmp(butid,"LEFTRIGHT")) return GN_LEFT;
-
-	if (!strcmp(butid,"JOY")) return GN_UP;
-
-	if (!strcmp(butid,"START")) return GN_START;
-	if (!strcmp(butid,"COIN")) return GN_SELECT_COIN;
-
-	if (!strcmp(butid,"MENU")) return GN_MENU_KEY;
-
-	if (!strcmp(butid,"HOTKEY1")) return GN_HOTKEY1;
-	if (!strcmp(butid,"HOTKEY2")) return GN_HOTKEY2;
-	if (!strcmp(butid,"HOTKEY3")) return GN_HOTKEY3;
-	if (!strcmp(butid,"HOTKEY4")) return GN_HOTKEY4;
-	return GN_NONE;
+	return keymap_button_from_name(butid);
 }
+#endif
 
 #ifdef SYMBIAN
-static int symbian_audio_volkeys_mapped = 0;
-static Uint8 mapped_buttons[GN_MAX_KEY] = {0,};
-
-// FIX sscanf exp: this is much faster on symbian
+/* Keyboard bindings are parsed/stored by keymap.c; Symbian has no joystick map. */
 bool create_joymap_from_string(int player,char *jconf)
 {
-
-	char *v;
-	char butid[32]={0};
-	int rc, code;
-	char type;
-
-	printf("Jconf=%s\n",jconf);
 	if (jconf==NULL) return false;
 	if (strlen(jconf)==0) return false;
-
-	char* tmp = strdup(jconf);
-	v = strtok(tmp,",");
-	while(v)
-	{
-	    rc = sscanf(v,"%[^=]=%c%d",butid,&type, &code);
-	    if (rc==3 && type=='K')
-	    {
-		//printf("%s | keycode %d\n",butid, code);
-		if (code < SDLK_LAST)
-		{
-		    if(code == SDLK_HASH || code == SDLK_ASTERISK)
-		    {
-			//printf("default volume keys mapped\n");
-			symbian_audio_volkeys_mapped = 1;
-		    }
-		    jmap->key[code].player=player;
-		    int id = get_mapid(butid);
-		    mapped_buttons[id] = 1;
-		    jmap->key[code].map=id;
-		}
-	    }
-	    v = strtok(NULL, ",");
-	}
-
-	free(tmp);
-	return true;
+	return keymap_parse(player,jconf);
 }
-
-// set default mapping in case some key is missing
-void map_default_buttons()
-{
-    int i;
-    for (i = 1; i < GN_MENU_KEY; i++) 
-    {
-	int btn = mapped_buttons[i];
-	if (btn != 0) continue;
-	fprintf(stderr, "%d not mapped\n", i);
-	// maybe there is a better way than this long/hardcoded switch-case...
-	switch (i)
-	{
-	    case GN_A:
-		jmap->key[SDLK_2].map=i;
-		jmap->key[SDLK_2].player=1;
-		break;
-	    case GN_B:
-		jmap->key[SDLK_8].map=i;
-		jmap->key[SDLK_8].player=1;
-		break;
-	    case GN_C:
-		jmap->key[SDLK_4].map=i;
-		jmap->key[SDLK_4].player=1;
-		break;
-	    case GN_D:
-		jmap->key[SDLK_6].map=i;
-		jmap->key[SDLK_6].player=1;
-		break;
-	    case GN_START:
-		jmap->key[SDLK_5].map=i;
-		jmap->key[SDLK_5].player=1;
-		jmap->key[SDLK_RETURN].map=i;
-		jmap->key[SDLK_RETURN].player=1;
-		break;
-	    case GN_UP:
-		jmap->key[SDLK_UP].map=i;
-		jmap->key[SDLK_UP].player=1;
-		break;
-	    case GN_DOWN:
-		jmap->key[SDLK_DOWN].map=i;
-		jmap->key[SDLK_DOWN].player=1;
-		break;
-	    case GN_LEFT:
-		jmap->key[SDLK_LEFT].map=i;
-		jmap->key[SDLK_LEFT].player=1;
-		break;
-	    case GN_RIGHT:
-		jmap->key[SDLK_RIGHT].map=i;
-		jmap->key[SDLK_RIGHT].player=1;
-		break;
-	    case GN_SELECT_COIN:
-		jmap->key[SDLK_1].map=i;
-		jmap->key[SDLK_1].player=1;
-		break;
-	    /*case GN_MENU_KEY:
-		jmap->key[SDLK_RIGHT].map=i;
-		break;*/
-	    default:break;
-
-	}
-    }
-}
-
-
 #else
 bool create_joymap_from_string(int player,char *jconf) {
 	char *v;
@@ -171,6 +53,10 @@ bool create_joymap_from_string(int player,char *jconf) {
 	    return false;
 	} 
 
+	/* keyboard entries (Kxx) go to the keymap; joystick entries are handled below */
+	keymap_parse(player,jconf);
+
+
 	char* tmp = strdup(jconf);
 	v = strtok(tmp,",");
 	printf("V1=%s\n",v);
@@ -178,17 +64,8 @@ bool create_joymap_from_string(int player,char *jconf) {
 	{
 		rc=sscanf(v,"%[A-Z1-4]=%c%d%c%d",butid,&type,&jid,&jevt,&code);
 		rc = sscanf(v,"%[^=]=%c%d",butid,&type, &code);
-		if (rc==3 && type=='K')
-		{ /* Keyboard */
-			printf("%s | keycode %d\n",butid,jid);
-			code=jid;
-			if (code<SDLK_LAST) {
-				jmap->key[code].player=player;
-				jmap->key[code].map=get_mapid(butid);
-			}
-			//printf("%d\n",get_mapid(butid));
-		}
-		
+		/* keyboard entries are handled by keymap_parse() above */
+
 #if !SDL_JOYSTICK_DISABLED		
 		if (rc==5 && type=='J') {
 			printf("%d, %s | joy no %d | evt %c | %d\n",
@@ -238,6 +115,7 @@ bool init_event(void) {
 	int i;
 //	printf("sizeof joymap=%d nb_joy=%d\n",sizeof(JOYMAP),conf.nb_joy);
 	jmap=calloc(sizeof(JOYMAP),1);
+	keymap_clear();
 
 #ifdef WII
 	conf.nb_joy = 4;
@@ -273,13 +151,11 @@ bool init_event(void) {
 	}
 #endif //SDL_JOYSTICK_DISABLED
 
+	create_joymap_from_string(1,CF_STR(cf_get_item_by_name("p1control")));
 #ifdef SYMBIAN
-
-	create_joymap_from_string(1,CF_STR(cf_get_item_by_name("p1control")));
-	map_default_buttons();
-
+	/* fill in keys for buttons the config did not map */
+	keymap_apply_defaults(KM_P1);
 #else
-	create_joymap_from_string(1,CF_STR(cf_get_item_by_name("p1control")));
 	create_joymap_from_string(2,CF_STR(cf_get_item_by_name("p2control")));
 #endif // SYMBIAN
 	return true;
@@ -325,13 +201,52 @@ int handle_pdep_event(SDL_Event *event) {
 }
 
 #elif SYMBIAN
+
+static void auto_save_state() 
+{
+    char* game = conf.game;
+    if (!game) return;
+    
+    static Uint32 last_slot = 0;
+    Uint32 nb_slot = how_many_slot(game);
+
+    if ( last_slot == 0) {
+	last_slot = nb_slot;
+    }
+
+    else if ( (last_slot != 0) && (last_slot != nb_slot)) {   
+	//fprintf(stderr, "game changed?\n");
+	last_slot = nb_slot;
+    }
+ 
+
+    fprintf(stderr, "saving state:  %s.%03d\n", game, last_slot);
+    if (!save_state(game, last_slot))
+    {
+	fprintf(stderr, "failed to save state:  %s.%03d\n", game, last_slot);
+    }
+}
+
+static void auto_load_state() 
+{
+    char* game = conf.game;
+    if (!game) return;
+    
+    Uint32 last_slot = how_many_slot(game);
+    if ( last_slot > 0) last_slot--;
+
+    fprintf(stderr, "loading state:  %s.%03d\n", game, last_slot);
+    if (!load_state(game, last_slot))
+    {
+	fprintf(stderr, "failed to load state:  %s.%03d\n", game, last_slot);
+    }
+}
+
+
 int handle_pdep_event(SDL_Event *event)
 {
 	char volbuf[21];
-	if(symbian_audio_volkeys_mapped)
-	{
-	    return 0;
-	}
+
 	switch (event->type)
 	{
 	    case SDL_KEYDOWN:
@@ -341,7 +256,7 @@ int handle_pdep_event(SDL_Event *event)
 		    case SDLK_BACKSPACE:
 			return 1;
 		    case SDLK_HASH:
-			if(conf.sound)
+			if(conf.sound && !keymap_key_is_bound(SDLK_HASH))
 			{
 			    symbian_audio_volume_set(1, 1);
 			    sprintf(volbuf, "AVOL+ %d", symbian_audio_volume_get());
@@ -349,7 +264,7 @@ int handle_pdep_event(SDL_Event *event)
 			}
 			break;
 		    case SDLK_ASTERISK: 
-			if(conf.sound)
+			if(conf.sound && !keymap_key_is_bound(SDLK_ASTERISK))
 			{
 			    symbian_audio_volume_set(-1, 1);
 			    sprintf(volbuf, "AVOL- %d", symbian_audio_volume_get());
@@ -362,6 +277,13 @@ int handle_pdep_event(SDL_Event *event)
 			break;
 		    default:
 			break;
+		}
+		break;
+	    case SDL_KEYUP:{
+
+		if (keymap_key_has_button(event->key.keysym.sym, GN_SAVESTATE)) auto_save_state();
+
+		else if (keymap_key_has_button(event->key.keysym.sym, GN_LOADSTATE)) auto_load_state();
 		}
 		break;
 	    default:
@@ -410,39 +332,9 @@ int handle_event(void) {
 	    }
 		switch (event.type) {
 		case SDL_KEYUP:
-			//printf("%d\n",jmap->key[event.key.keysym.sym].player);
-			switch (jmap->key[event.key.keysym.sym].player) {
-			case 1:
-				joy_state[0][jmap->key[event.key.keysym.sym].map]=0;
-				break;
-			case 2:
-				joy_state[1][jmap->key[event.key.keysym.sym].map]=0;
-				break;
-			case 3:
-			//	joy_state[1][jmap->key[event.key.keysym.sym].map]=0;
-				joy_state[0][jmap->key[event.key.keysym.sym].map]=0;
-				break;
-			default:
-				break;
-			}
-		break;
-	    case SDL_KEYDOWN:
-		    //printf("SDL_KEY %d, PKEY %d\n", event.key.keysym.sym, jmap->key[event.key.keysym.sym].player);
-		    switch (jmap->key[event.key.keysym.sym].player) {
-			case 1:
-				joy_state[0][jmap->key[event.key.keysym.sym].map]=1;
-				break;
-			case 2:
-				joy_state[1][jmap->key[event.key.keysym.sym].map]=1;
-				break;
-			case 3:
-				joy_state[1][jmap->key[event.key.keysym.sym].map]=1;
-				joy_state[0][jmap->key[event.key.keysym.sym].map]=1;
-				break;
-			default:
-				break;
-		    }
-		    break;
+		case SDL_KEYDOWN:
+			keymap_key_event(event.key.keysym.sym, event.type == SDL_KEYDOWN);
+			break;
 		case SDL_JOYHATMOTION: /* Hat only support Joystick map */
 		{
 			int player=jmap->jhat[event.jhat.which][event.jhat.hat].player;
@@ -640,6 +532,7 @@ void reset_event(void) {
 	int i;
 	for (i = 0; i < GN_MAX_KEY; i++)
 		joy_state[0][i] = 0;
+	keymap_reset_state();
 	while (SDL_PollEvent(&event));
 	last=-1;
 	counter=40;
@@ -674,7 +567,7 @@ int wait_event(void) {
 			joy_state[0][GN_DOWN]=1;
 			//last=GN_DOWN;
 			//return GN_DOWN;
-			break;	
+			break;
 		case SDLK_LEFT:
 			joy_state[0][GN_LEFT]=1;
 			//last=GN_LEFT;

@@ -138,8 +138,8 @@ static gzFile open_state(char *game,int slot,int mode)
     st_name = (char*)alloca(len);
 #else 
     st_name = (char*)malloc(len);
-    memset(st_name, 0, len);
     CHECK_ALLOC(st_name);
+    memset(st_name, 0, len);
 #endif    
     sprintf(st_name,"%s%s.%03d",gngeo_dir,game,slot);
 
@@ -155,13 +155,14 @@ static gzFile open_state(char *game,int slot,int mode)
 
 		memset(string, 0, 20);
 		gzread(gzf, string, 6);
-		if (strcmp(string, "GNGST3")!=0 && strcmp(string, "GNGST2")!=0) {
+		if (strcmp(string, "GNGST4")!=0 && strcmp(string, "GNGST3")!=0 && strcmp(string, "GNGST2")!=0) {
 			fprintf(stderr, "%s is not a valid gngeo st file\n", st_name);
 			gzclose(gzf);
 			return NULL;
 		}
 		if (strcmp(string, "GNGST2")==0) state_version=ST_VER2;
-		if (strcmp(string, "GNGST3")==0) state_version=ST_VER3;	
+		if (strcmp(string, "GNGST3")==0) state_version=ST_VER3;
+		if (strcmp(string, "GNGST4")==0) state_version=ST_VER4;
 		gzread(gzf, &flags, sizeof (int));
 
 		if (flags != (m68k_flag | z80_flag | endian_flag)) {
@@ -172,7 +173,7 @@ static gzFile open_state(char *game,int slot,int mode)
 		}
 	} else {
 		int flags=m68k_flag | z80_flag | endian_flag;
-		gzwrite(gzf, "GNGST3", 6);
+		gzwrite(gzf, "GNGST4", 6);
 		gzwrite(gzf, &flags, sizeof(int));
 	}
 	return gzf;
@@ -215,14 +216,31 @@ static void neogeo_mkstate(gzFile gzf,int mode) {
 	mkstate_data(gzf, &sram_lock, sizeof (Uint8), mode);
 	cpu_68k_mkstate(gzf, mode);
 #ifndef ENABLE_940T
-	if (!neo_sound_initialized) return;
-	if (mode==STREAD)
 	{
-	    if(gn_popup_question("Load state", "restoring audio state might not work properly! continue?") == 1) return;
+		Uint8 audio_flag = 0;
+
+		if (mode == STWRITE) {
+			audio_flag = neo_sound_initialized ? 1 : 0;
+			mkstate_data(gzf, &audio_flag, 1, mode);
+		} else if (state_version >= ST_VER4) {
+			mkstate_data(gzf, &audio_flag, 1, mode);
+		} else {
+			/* legacy v2/v3: no flag. The block holds valid data if sound was on
+			 * when saved, an uninitialized dump if it was off. Can't tell which,
+			 * so keep the old behaviour (restore) if anything is left to read. */
+			int c = gzgetc(gzf);
+			if (c < 0) return;          /* no audio block at all */
+			gzungetc(c, gzf);
+			audio_flag = 1;
+		}
+
+		if (!audio_flag || !neo_sound_initialized)
+			return;   /* audio block (if any) is last in the file, safe to skip */
+
+		mkstate_data(gzf, z80_bank,sizeof(Uint16)*4, mode);
+		cpu_z80_mkstate(gzf, mode);
+		ym2610_mkstate(gzf, mode);
 	}
-	mkstate_data(gzf, z80_bank,sizeof(Uint16)*4, mode);
-	cpu_z80_mkstate(gzf, mode);
-	ym2610_mkstate(gzf, mode);
 
 #else
 /* TODO */

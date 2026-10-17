@@ -30,6 +30,9 @@
 #define Uintptr long
 
 
+/* manual frameskip: max number of frames skipped after each displayed frame */
+#define MANUAL_FRAMESKIP_MAX 9
+
 typedef enum SYSTEM {
     SYS_ARCADE=0,
     SYS_HOME,
@@ -89,6 +92,8 @@ struct {
 
     int p1_hotkey[4];
     int p2_hotkey[4];
+
+    Uint8 frameskip;   /* manual frameskip, used when autoframeskip is off */
 } conf;
 
 enum {
@@ -154,7 +159,7 @@ void neogeo_reset(void);
 #define DEBUG_LOG
 #endif // ENABLE_DEBUG_LOG
 #define TRUE 1
-#define FALSE 1
+#define FALSE 0
 
 
 #endif

@@ -92,7 +92,7 @@ char *file_basename(char *filename) {
 
 /* check if dir_name exist. Create it if not */
 bool check_dir(char *dir_name) {
-    DIR *d;
+    DIR *d = NULL;
     bool res = true;
     if (!(d = opendir(dir_name)) && (errno == ENOENT)) {
 #ifdef WIN32
@@ -103,7 +103,7 @@ bool check_dir(char *dir_name) {
 	
         res = false;
     }
-    closedir(d);
+    if (d != NULL) closedir(d);
     return res;
 }
 
@@ -319,7 +319,8 @@ bool load_game_config(char *rom_name)
     {
 	if (strstr(rom_name,".gno")!=NULL)
 	{
-	    char *name = dr_gno_romname(rom_name);
+	    char *name = dr_gno_romname(rom_name); // also validates gno file
+	    
 	    if (name)
 	    {
 		printf("Tring to load a gno file %s %s\n",rom_name,name);
@@ -376,7 +377,8 @@ bool init_game(char *rom_name) {
     trans_pack_open(CF_STR(cf_get_item_by_name("transpack")));
 
     if (strstr(rom_name, ".gno") != NULL) {
-        dr_open_gno(rom_name);
+        if (!dr_open_gno(rom_name)) return false;
+    
 
     } else {
 

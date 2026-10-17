@@ -43,6 +43,7 @@ static uclock_t F;
 
 
 static char init_frame_skip = 1;
+static int manual_pos = 0;   /* manual frameskip: position inside the skip cycle */
 char skip_next_frame = 0;
 #if defined(HAVE_GETTIMEOFDAY) && !defined(WII)
 static int CPU_FPS=60;
@@ -86,6 +87,7 @@ void reset_frame_skip(void)
     init_tv=0;
 #endif
     skip_next_frame = 0;
+    manual_pos = 0;
     init_frame_skip = 1;
     if (conf.pal)
 	CPU_FPS=50;
@@ -107,6 +109,8 @@ int frame_skip(int init)
     static int skpFrm = 0;
     static int count = 0;
     static int moy=60;
+    Sint32 lag;           /* >0: behind the target time, <0: ahead (wrap-safe) */
+    int skip = 0;         /* result: skip the next frame */
 
     if (init_frame_skip) {
 		init_frame_skip = 0;
@@ -130,27 +134,58 @@ int frame_skip(int init)
 //	printf("%d %d\n",conf.autoframeskip,conf.show_fps);
 
     rfd = get_ticks();
+    lag = (Sint32)(rfd - target);
 
     if (conf.autoframeskip) {
-	if (rfd < target && f2skip == 0)
-	    while (get_ticks() < target) {
+	if (lag < 0 && f2skip == 0)
+	    while ((Sint32)(get_ticks() - target) < 0) {
 #ifndef WIN32
 		if (conf.sleep_idle) {
 		    usleep(5);
 		}
 #endif
 	} else {
-	    f2skip = (rfd - target) / (double) F;
+	    f2skip = lag / (double) F;
 	    if (f2skip > MAX_FRAMESKIP) {
 		f2skip = MAX_FRAMESKIP;
 		reset_frame_skip();
 	    }
 	    // printf("Skip %d frame(s) %lu %lu\n",f2skip,target,rfd);
 	}
+    } else {
+	/* Auto frameskip off: no frame is skipped, but the emulation is still
+	 * held to the target rate (60 fps, 50 for PAL) instead of running flat out.
+	 * Signed differences keep this correct when the 32-bit tick counter wraps
+	 * (every ~71 minutes). */
+	if (lag < 0) {
+	    while ((Sint32)(get_ticks() - target) < 0) {
+#ifndef WIN32
+		if (conf.sleep_idle) {
+		    usleep(5);
+		}
+#endif
+	    }
+	} else if (lag > (Sint32)(MAX_FRAMESKIP * F)) {
+	    /* far behind (slow device, or after a pause): drop the backlog
+	     * instead of trying to catch up */
+	    target = rfd;
+	}
     }
 
-    nbFrame++;
-    nbFrame_moy++;
+    if (!conf.autoframeskip) {
+	/* manual frameskip: after each displayed frame, skip conf.frameskip frames (0 = none) */
+	if (manual_pos < conf.frameskip) {
+	    manual_pos++;
+	    skip = 1;
+	} else {
+	    manual_pos = 0;
+	}
+    }
+
+    if (!skip) {
+	nbFrame++;
+	nbFrame_moy++;
+    }
 /*
   if(bench && totalFrame++>=5000) {
   printf("average fps=%f \n",(TICKS_PER_SEC*5000.0/(get_ticks()-bench)));
@@ -177,5 +212,5 @@ int frame_skip(int init)
 		    sec = get_ticks();
 	    }
     }
-    return 0;
+    return skip;
 }

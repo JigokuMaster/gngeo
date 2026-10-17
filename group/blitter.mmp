@@ -1,8 +1,4 @@
-OPTION GCCE -Wno-unused -O3
-
-MACRO HAVE_CONFIG_H
-MACRO   OPENC
-MACRO SYMBIAN
+#include "gngeo.mmh"
 
 TARGET libgn_blitter.lib
 TARGETTYPE lib
@@ -15,4 +11,3 @@ SOURCEPATH ..\src\gngeo-0.8\src\blitter
 SOURCE overlay.c soft.c 
 //opengles.c
 
-ALWAYS_BUILD_AS_ARM

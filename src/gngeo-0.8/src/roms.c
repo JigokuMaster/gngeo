@@ -26,6 +26,48 @@
 #include "ym2610-940/940shared.h"
 #endif
 
+
+/* Helper function that builds "<rompath><sep><name><ext>" into out.
+ *  - name: file or game name (may be NULL or "" to get just the directory)
+ *  - ext:  e.g. ".zip" or ".gno" (may be NULL)
+ * A separator is added only if rompath doesn't already end with one, and it
+ * matches the style rompath already uses ('\\' if it has any, else '/').
+ * Returns false if the result doesn't fit in out (out is then "").
+ */
+bool gn_rom_path(char *out, size_t out_size, const char *name, const char *ext)
+{
+    const char *rpath = CF_STR(cf_get_item_by_name("rompath"));
+    size_t rlen, n;
+    char sep = '/';
+    const char *p;
+
+    if (!out || out_size == 0) return false;
+    out[0] = 0;
+    if (!rpath) rpath = "";
+    if (!name) name = "";
+    if (!ext)  ext  = "";
+
+    /* pick the separator style already used in rompath */
+    for (p = rpath; *p; p++) {
+        if (*p == '\\') { sep = '\\'; break; }
+    }
+
+    rlen = strlen(rpath);
+    /* skip separators at the start of name so we never double up */
+    while (*name == '/' || *name == '\\') name++;
+
+    if (rlen > 0 && rpath[rlen - 1] != '/' && rpath[rlen - 1] != '\\' && *name)
+        n = (size_t) snprintf(out, out_size, "%s%c%s%s", rpath, sep, name, ext);
+    else
+        n = (size_t) snprintf(out, out_size, "%s%s%s", rpath, name, ext);
+
+    if (n >= out_size) {      /* truncated */
+        out[0] = 0;
+        return false;
+    }
+    return true;
+}
+
 /* Prototype */
 void kof98_decrypt_68k(GAME_ROMS *r);
 void kof99_decrypt_68k(GAME_ROMS *r);
@@ -1221,29 +1263,32 @@ static int init_roms(GAME_ROMS *r) {
 }
 
 bool dr_load_bios(GAME_ROMS *r) {
+
+	bool res = false;
 	FILE *f;
 	int i;
 	PKZIP *pz;
 	ZFILE *z;
 	size_t totread = 0;
 	unsigned int size;
-	char *rpath = CF_STR(cf_get_item_by_name("rompath"));
 	char *fpath;
 	char *romfile;
-	fpath = malloc(strlen(rpath) + strlen("neogeo.zip") + 2);
-	sprintf(fpath, "%s/neogeo.zip", rpath);
+
+
+	char *rpath = CF_STR(cf_get_item_by_name("rompath"));
+	fpath = malloc(512);
+	gn_rom_path(fpath, 512, "neogeo", ".zip");
 
 	pz = gn_open_zip(fpath);
 	if (pz == NULL) {
 		fprintf(stderr, "Can't open BIOS (%s)\n", fpath);
-		free(fpath);
-		return false;
+		goto exit_label;
 	}
 
 	memory.ng_lo = gn_unzip_file_malloc(pz, "000-lo.lo", 0x0, &size);
 	if (memory.ng_lo == NULL) {
-		printf("Couldn't find 000-lo.lo, please check your bios\n");
-		return false;
+		sprintf(romerror, "Couldn't find 000-lo.lo, please check your bios\n");
+		goto exit_label;
 	}
 
 	if (!(r->info.flags & HAS_CUSTOM_SFIX_BIOS)) {
@@ -1251,12 +1296,12 @@ bool dr_load_bios(GAME_ROMS *r) {
 		r->bios_sfix.p = gn_unzip_file_malloc(pz, "sfix.sfx", 0x0,
 				&r->bios_sfix.size);
 		if (r->bios_sfix.p == NULL) {
-			printf("Couldn't find sfix.sfx, try sfix.sfix\n");
+			sprintf(romerror, "Couldn't find sfix.sfx, try sfix.sfix\n");
 			r->bios_sfix.p = gn_unzip_file_malloc(pz, "sfix.sfix", 0x0,
 					&r->bios_sfix.size);
 			if (r->bios_sfix.p == NULL) {
-				printf("Couldn't find sfix.sfx nor sfix.sfix, please check your bios\n");
-				return false;
+				sprintf(romerror, "Couldn't find sfix.sfx nor sfix.sfix, please check your bios\n");
+				goto exit_label;
 			}
 		}
 	}
@@ -1275,10 +1320,10 @@ bool dr_load_bios(GAME_ROMS *r) {
 				sprintf(unipath, "%s/uni-bios.rom", rpath);
 				f = fopen(unipath, "rb");
 				if (!f) { /* TODO: Fallback to arcade mode */
-					fprintf(stderr, "Can't open Universal BIOS (%s)\n", unipath);
+					sprintf(romerror, "Can't open Universal BIOS (%s)\n", unipath);
 					free(fpath);
 					free(unipath);
-					return false;
+					goto exit_label;
 				}
 				r->bios_m68k.p = malloc(0x20000);
 				totread = fread(r->bios_m68k.p, 0x20000, 1, f);
@@ -1309,42 +1354,26 @@ bool dr_load_bios(GAME_ROMS *r) {
 			r->bios_m68k.p = gn_unzip_file_malloc(pz, romfile, 0x0,
 					&r->bios_m68k.size);
 			if (r->bios_m68k.p == NULL) {
-				printf("Couldn't loas bios %s\n", romfile);
-				goto error;
+				sprintf(romerror, "Couldn't load bios %s\n", romfile);
+				goto exit_label;
 			}
 		}
 	}
 
-	gn_close_zip(pz);
-	free(fpath);
-	return true;
+	/*if (pz != NULL) gn_close_zip(pz);
+	if (fpath != NULL) free(fpath);*/
+	res = true;
 
-error:
-	gn_close_zip(pz);
-	free(fpath);
-	return false;
+exit_label:
+	if (pz != NULL) gn_close_zip(pz);
+	if (fpath != NULL) free(fpath);
+	return res;
 }
 
 ROM_DEF *dr_check_zip(char *filename) {
 	
-	char *z;
 	ROM_DEF *drv;
-#ifdef HAVE_BASENAME
-	char *game = strdup(basename(filename));
-#else
-	char *game = strdup(strrchr(filename, '/'));
-#endif
-	//	printf("Game=%s\n", game);
-	if (game == NULL)
-		return NULL;
-		
-	z = strstr(game, ".zip");
-	//	printf("z=%s\n", game);
-	if (z == NULL)
-		return NULL;
-	z[0] = 0;
-	drv = res_load_drv(game);
-	free(game);
+	drv = res_load_drv(filename/*game name without extention*/);
 	return drv;
 }
 
@@ -1510,9 +1539,9 @@ error1:
 
 bool dr_load_game(char *name) {
 	//GAME_ROMS rom;
-	char *rpath = CF_STR(cf_get_item_by_name("rompath"));
+
 	int rc;
-	printf("Loading %s/%s.zip\n", rpath, name);
+	char *rpath = CF_STR(cf_get_item_by_name("rompath"));
 	memory.bksw_handler = 0;
 	memory.bksw_unscramble = NULL;
 	memory.bksw_offset = NULL;
@@ -1600,7 +1629,7 @@ static int dump_region(FILE *gno, ROM_REGION *rom, Uint8 id, Uint8 type,
 		printf("cmpsize=%d\n", cmpsize);
 		fseek(gno, 0, SEEK_END);
 		offset_pos = ftell(gno);
-		printf("currpos=%li\n", offset_pos);
+		printf("offset_pos=%li\n", offset_pos);
 	}
 	return TRUE;
 }
@@ -1791,14 +1820,18 @@ int dr_open_gno(char *filename) {
 	need_decrypt = 0;
 
 	gno = fopen(filename, "rb");
-	if (!gno)
-		return FALSE;
+	if (!gno) return FALSE;
 
 	totread += fread(fid, 8, 1, gno);
-	if (strncmp(fid, "gnodmpv1", 8) != 0) {
-		printf("Invalid GNO file\n");
-		return FALSE;
+	if (strncmp(fid, "gnodmpv1", 8) != 0) 
+	{
+
+	    fclose(gno); 
+	    sprintf(romerror, "Invalid GNO file\n");
+	    return FALSE;
 	}
+
+
 	totread += fread(name, 8, 1, gno);
 	a = strchr(name, ' ');
 	if (a) a[0] = 0;
@@ -1818,7 +1851,7 @@ int dr_open_gno(char *filename) {
 		r->adpcmb.p = r->adpcma.p;
 		r->adpcmb.size = r->adpcma.size;
 	}
-	//fclose(gno);
+	//fclose(gno); // done in dr_free_roms()
 
 	memory.fix_game_usage = r->gfix_usage.p;
 	/*	memory.pen_usage = malloc((r->tiles.size >> 11) * sizeof(Uint32));
@@ -1829,14 +1862,18 @@ int dr_open_gno(char *filename) {
 	/* Init rom and bios */
 	init_roms(r);
 	//convert_all_tile(r);
-	dr_load_bios(r);
+	if (!dr_load_bios(r))
+	{
+     
+            sprintf(romerror, "Couldn't load or find the BIOS.");   
+	    return FALSE;
+	}
 
 	conf.game = memory.rom.info.name;
 
 	memcpy(memory.game_vector, memory.rom.cpu_m68k.p, 0x80);
 	memcpy(memory.rom.cpu_m68k.p, memory.rom.bios_m68k.p, 0x80);
 	init_video();
-
 	return TRUE;
 }
 
@@ -1847,13 +1884,14 @@ char *dr_gno_romname(char *filename) {
 	size_t totread = 0;
 
 	gno = fopen(filename, "rb");
-	if (!gno)
-		return NULL;
+	if (!gno) return NULL;
 
 	totread += fread(fid, 8, 1, gno);
-	if (strncmp(fid, "gnodmpv1", 8) != 0) {
-		printf("Invalid GNO file\n");
-		return NULL;
+	if (strncmp(fid, "gnodmpv1", 8) != 0) 
+	{
+	    fclose(gno);
+	    printf("Invalid GNO file\n");
+	    return NULL;
 	}
 
 	totread += fread(name, 8, 1, gno);

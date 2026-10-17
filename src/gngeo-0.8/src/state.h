@@ -13,6 +13,7 @@ SDL_Surface *state_img;
 #define ST_VER1 1
 #define ST_VER2 2
 #define ST_VER3 3
+#define ST_VER4 4
 
 Uint8 state_version;
 SDL_Surface *load_state_img(char *game,int slot);

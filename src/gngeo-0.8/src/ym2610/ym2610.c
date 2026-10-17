@@ -2840,17 +2840,26 @@ int YM2610TimerOver(int ch) {
 
 	return ST->irq;
 }
+
+
+#ifndef USE_SYMBIAN_AUDIOSTREAM
 s16 mixing_buffer[2][16384];
 extern Uint16 play_buffer[16384];
+#endif
 //static Uint32 buf_pos;
 
+
 /* Generate samples for one of the YM2610s */
-void YM2610Update_stream(int length) {
+//void YM2610Update_stream(int length)
+
+void YM2610Update_stream_to(int length, s16 *dst){
+
 	FM_OPN *OPN = &YM2610.OPN;
 	int i, j, outn;
 	FMSAMPLE_MIX lt, rt;
 	FM_CH *cch[6];
-	Uint16 *pl = play_buffer;
+	//Uint16 *pl = play_buffer;
+	s16 *pl = dst;
 
 	//printf("AAA %d\n",length);
 	cch[0] = &YM2610.CH[1];
@@ -2968,6 +2977,14 @@ void YM2610Update_stream(int length) {
 
 }
 
+
+#ifndef USE_SYMBIAN_AUDIOSTREAM
+
+void YM2610Update_stream(int length)                /* old API, still works */
+{
+    YM2610Update_stream_to(length, (s16 *)play_buffer);
+}
+
 void YM2610Update(int *p) {
 	int i;
 	s16 *buffer = (s16 *) p;
@@ -3011,6 +3028,8 @@ void YM2610Update(int *p) {
 		break;
 	}
 }
+#endif 
+
 
 #ifdef SOUND_TEST
 static int stream_pos;

@@ -78,6 +78,7 @@ int dr_save_gno(GAME_ROMS *r,char *filename);
 bool dr_load_game(char *zip);
 ROM_DEF *dr_check_zip(char *filename);
 char *dr_gno_romname(char *filename);
+bool gn_rom_path(char *out, size_t out_size, const char *name, const char *ext);
 int dr_open_gno(char *filename);
 
 #endif

@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "symbian_s60.h"
+#include "sound.h"
 
 char g_symbian_gngeo_dir[12];
 char g_symbian_gngeo_romsdir[17];
@@ -112,10 +113,11 @@ void symbian_init()
        TFileName source;
        TFileName target(_L("\\gngeo\\gngeorc"));
        target.Insert(0, RProcess().FileName().Left(2)); // insert drive char + seperator
-
-       if (!BaflUtils::FileExists(rfs, target) && GetPrivateFile(rfs, source, KConfigFile))
+       
+       char d = RProcess().FileName()[0];
+       //fprintf(stderr, "GNGEO INSTALL DRIVE=%c:\n", d);
+       if ((!BaflUtils::FileExists(rfs, target)) && GetPrivateFile(rfs, source, KConfigFile))
        {
-
 	   error = BaflUtils::CopyFile(rfs, source, target);
 	   if (error == KErrNone) puts("gngeorc copied\n");
 	}
@@ -198,7 +200,12 @@ void symbian_audio_volume_set(int v, int update)
     {
 	current_audio_volume = 5;
     }
+
+#ifdef USE_SYMBIAN_AUDIOSTREAM
+    SymbianAudioStream_SetVolume(current_audio_volume);
+#else
     EPOC_SetAudioVolume(current_audio_volume);
+#endif
 }
 
 int symbian_audio_volume_get()
@@ -208,7 +215,12 @@ int symbian_audio_volume_get()
 
 void symbian_audio_mute()
 {
+
+#ifdef USE_SYMBIAN_AUDIOSTREAM
+    SymbianAudioStream_SetVolume(0);
+#else
     EPOC_SetAudioVolume(0);
+#endif
 }
 
 bool symbian_get_screenorientation()

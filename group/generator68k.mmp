@@ -1,7 +1,7 @@
-OPTION GCCE -Wno-unused -O3
 
-MACRO OPENC
-MACRO HAVE_CONFIG_H
+#include "gngeo.mmh"
+
+OPTION GCCE -funit-at-a-time
 
 TARGET libgn_generator68k.lib
 TARGETTYPE lib
@@ -33,4 +33,3 @@ SOURCE reg68k.c
 SOURCE diss68k.c
 SOURCE tab68k.c
 
-ALWAYS_BUILD_AS_ARM

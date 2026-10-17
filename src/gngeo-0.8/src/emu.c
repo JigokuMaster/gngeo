@@ -208,8 +208,7 @@ static int last_line;
 static int skip_this_frame = 0;
 
 static inline int neo_interrupt(void) {
-    static int frames;
-
+	static int frames;
 	pd4990a_addretrace();
 	// printf("neogeo_frame_counter_speed %d\n",neogeo_frame_counter_speed);
 	if (!(memory.vid.irq2control & 0x8)) {
@@ -230,6 +229,7 @@ static inline int neo_interrupt(void) {
 
 		PROFILER_STOP(PROF_VIDEO);
 	}
+
     /*
     frames++;
     printf("FRAME %d\n",frames);
@@ -375,261 +375,6 @@ void main_loop(void) {
 			reset_event();
 		}
 
-#if 0
-		while (SDL_PollEvent(&event)) {
-			switch (event.type) {
-				case SDL_JOYAXISMOTION:
-				if (event.jaxis.value >5000 || event.jaxis.value<-5000)
-				printf("AXE %d %d dir %d\n",event.jaxis.which,event.jaxis.axis,event.jaxis.value);
-				joy_axe[event.jaxis.which][event.jaxis.axis] = event.jaxis.value;
-				if (show_keysym) {
-					sprintf(ksym_code, "%d", event.jaxis.axis);
-					draw_message(ksym_code);
-				}
-				break;
-
-				case SDL_JOYHATMOTION:
-				printf("HAT %d dir %d\n",event.jhat.which,event.jhat.value);
-				switch (event.jhat.value) {
-					case SDL_HAT_CENTERED:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = 0;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = 0;
-					break;
-
-					case SDL_HAT_UP:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = -32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = 0;
-					break;
-
-					case SDL_HAT_DOWN:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = 32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = 0;
-					break;
-
-					case SDL_HAT_LEFT:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = -32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = 0;
-					break;
-
-					case SDL_HAT_RIGHT:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = 32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = 0;
-					break;
-
-					case SDL_HAT_RIGHTUP:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = 32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = -32767;
-					break;
-
-					case SDL_HAT_RIGHTDOWN:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = 32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = 32767;
-					break;
-
-					case SDL_HAT_LEFTUP:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = -32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = -32767;
-					break;
-
-					case SDL_HAT_LEFTDOWN:
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which]] = -32767;
-					joy_axe[event.jhat.which][(event.jhat.hat * 2) + joy_numaxes[event.jhat.which] + 1] = 32767;
-					break;
-
-				}
-
-				if (show_keysym) {
-					sprintf(ksym_code, "%d", event.jhat.hat);
-					draw_message(ksym_code);
-				}
-				break;
-
-				case SDL_JOYBUTTONDOWN:
-				joy_button[event.jbutton.which][event.jbutton.button] = 1;
-				//printf("Joy event %d %d\n",event.jbutton.which,event.jbutton.button);
-
-				if (show_keysym) {
-					sprintf(ksym_code, "%d", event.jbutton.button);
-					draw_message(ksym_code);
-				}
-#ifdef GP2X
-				if ((joy_button[0][GP2X_VOL_UP]) && conf.sound) {
-					if (snd_volume<100) snd_volume+=5; else snd_volume=100;
-					gp2x_sound_volume_set(snd_volume,snd_volume);
-					for (i=0;i<snd_volume/5;i++) volbuf[i]='|';
-					for (i=snd_volume/5;i<20;i++) volbuf[i]='-';
-					volbuf[20]=0;
-					draw_message(volbuf);
-				}
-				if ((joy_button[0][GP2X_VOL_DOWN] && conf.sound)) {
-					if (snd_volume>0) snd_volume-=5; else snd_volume=0;
-					gp2x_sound_volume_set(snd_volume,snd_volume);
-					for (i=0;i<snd_volume/5;i++) volbuf[i]='|';
-					for (i=snd_volume/5;i<20;i++) volbuf[i]='-';
-					volbuf[20]=0;
-					draw_message(volbuf);
-				}
-				if ((joy_button[0][GP2X_PUSH]) &&
-						(joy_button[0][GP2X_VOL_DOWN]) &&
-						(joy_button[0][GP2X_VOL_UP]) ) {
-					//if ((joy_button[0][GP2X_L])) {
-					draw_message("Test Switch ON");
-					conf.test_switch = 1;
-					break;
-				}
-				//if ((joy_button[0][GP2X_PUSH]) && (joy_button[0][GP2X_R])) {
-				if (joy_button[0][GP2X_R] && joy_button[0][GP2X_L] &&
-						(joy_button[0][GP2X_START] || joy_button[0][GP2X_SELECT])) {
-					joy_button[0][GP2X_R] = joy_button[0][GP2X_L] = 0;
-					joy_button[0][GP2X_START] = joy_button[0][GP2X_SELECT] = 0;
-
-					SDL_BlitSurface(buffer, &buf_rect, state_img, &screen_rect);
-					if (conf.sound) {pause_audio(1); SDL_LockAudio();}
-					if (run_menu()==2) {neo_emu_done = 1;SDL_UnlockAudio();} // A bit ugly...
-					if (conf.sound) {pause_audio(0); SDL_UnlockAudio();}
-					//neo_emu_done = 1;
-					reset_frame_skip();
-					break;
-				}
-				/*
-				 switch (event.jbutton.button) {
-				 case GP2X_R:
-				 if (joy_button[0][GP2X_PUSH]) neo_emu_done = 1;
-				 break;	// ESC
-				 default:
-				 break;
-				 }*/
-#endif
-				break;
-				case SDL_JOYBUTTONUP:
-				joy_button[event.jbutton.which][event.jbutton.button] = 0;
-				break;
-#ifndef GP2X
-				case SDL_KEYUP:
-				key[event.key.keysym.sym] = 0;
-				break;
-				case SDL_KEYDOWN:
-				scancode = event.key.keysym.sym;
-				if (show_keysym) {
-					sprintf(ksym_code, "%d", scancode);
-					draw_message(ksym_code);
-				}
-				key[scancode] = 1;
-
-				switch (scancode) {
-					case SDLK_ESCAPE:
-					neo_emu_done = 1;
-					break; // ESC
-					/*
-					 case SDLK_TAB:
-					 main_gngeo_gui();
-					 break;
-					 */
-					case SDLK_F1:
-					draw_message("Reset");
-					//neogeo_init();
-					cpu_68k_reset();
-					break;				
-					case SDLK_F2:
-					take_screenshot();
-					draw_message("Screenshot saved");
-					break;
-					case SDLK_F3:
-					draw_message("Test Switch ON");
-					conf.test_switch = 1;
-					break;
-					case SDLK_F5:
-					show_fps ^= SDL_TRUE;
-					break;
-					case SDLK_F4:
-					show_keysym = 1 - show_keysym;
-					if (show_keysym)
-					draw_message("Show keysym code : ON");
-					else
-					draw_message("Show keysym code : OFF");
-					break;
-					case SDLK_F6:
-					slow_motion = 1 - slow_motion;
-					if (slow_motion)
-					draw_message("SlowMotion : ON");
-					else {
-						draw_message("SlowMotion : OFF");
-						reset_frame_skip();
-					}
-					break;
-					case SDLK_F7:
-					//screen_set_effect("scanline");
-					if (conf.debug) {
-						dbg_step = 1;
-					}
-					break;
-					case SDLK_F8:
-					{
-						int val;
-						char *endptr;
-						text_input("Save to slot [0-999]? ",16,227,input_buf,3);
-						val=strtol(input_buf,&endptr,10);
-						if (input_buf != endptr) {
-							pending_save_state=val+1;
-						}
-					}
-					break;
-					case SDLK_F9:
-					{
-						int val;
-						char *endptr;
-						text_input("Load from slot [0-999]? ",16,227,input_buf,3);
-						val=strtol(input_buf,&endptr,10);
-						if (input_buf != endptr) {
-							pending_load_state=val+1;
-						}
-					}
-					break;
-					case SDLK_F10:
-					autoframeskip ^= SDL_TRUE;
-					if (autoframeskip) {
-						reset_frame_skip();
-						draw_message("AutoFrameSkip : ON");
-					} else
-					draw_message("AutoFrameSkip : OFF");
-					break;
-					case SDLK_F11:
-					sleep_idle ^= SDL_TRUE;
-					if (sleep_idle)
-					draw_message("Sleep idle : ON");
-					else
-					draw_message("Sleep idle : OFF");
-					break;
-					case SDLK_F12:
-					screen_fullscreen();
-					break;
-				}
-				break;
-#endif
-				case SDL_VIDEORESIZE:
-				conf.res_x=event.resize.w;
-				conf.res_y=event.resize.h;
-				screen_resize(event.resize.w, event.resize.h);
-				break;
-				case SDL_QUIT:
-				neo_emu_done = 1;
-				break;
-				default:
-				break;
-			}
-		}
-
-		/* update the internal representation of keyslot */
-		update_p1_key();
-		update_p2_key();
-		update_start();
-		update_coin();
-
-#endif
-
-		if (slow_motion)
-			SDL_Delay(100);
-
 #ifndef ENABLE_940T
 		if (neo_sound_initialized && conf.sound) {
 			PROFILER_START(PROF_Z80);
@@ -699,6 +444,12 @@ void main_loop(void) {
                     printf("WATCHDOG RESET %d\n",memory.watchdog);
 					cpu_68k_reset();
                 }
+#ifdef USE_SYMBIAN_AUDIOSTREAM
+	
+				if (conf.sound) {
+				    SymbianAudioStream_Update();
+				}
+#endif
 
 				if (a) {
 					cpu_68k_interrupt(a);

@@ -1,17 +1,11 @@
 #include "gngeo.mmh"
 #include "../inc/SDLLauncher.hrh"
 
-OPTION GCCE -Wno-unused -O3 -ftracer 
-OPTION GCCE -fstrength-reduce -funroll-loops  
-OPTION GCCE -fomit-frame-pointer -fstrict-aliasing -ffast-math
-MACRO   OPENC
-MACRO   SYMBIAN S60V3
+MACRO   S60V3
 
-MACRO   HAVE_CONFIG_H
 MACRO   _GNU_SOURCE=1
 MACRO   _REENTRANT
 MACRO   USE_STBZLIB
-
 
 TARGET gngeo.exe
 TARGETTYPE exe
@@ -34,6 +28,7 @@ SYSTEMINCLUDE \epoc32\include\ESDL
 USERINCLUDE  ..\inc
 SOURCEPATH ..\src
 SOURCE SDLAppLauncher.cpp
+SOURCE DirectAudioStream.cpp
 
 
 SOURCEPATH ..\src\gngeo-0.8\src
@@ -52,7 +47,8 @@ SOURCE messages.c
 SOURCE screen.c
 SOURCE emu.c
 SOURCE neocrypt.c
-SOURCE sound.c
+//SOURCE sound.c
+SOURCE symbian_sound.cpp
 SOURCE unzip.c
 SOURCE debug.c
 SOURCE state.c
@@ -63,6 +59,7 @@ SOURCE fileio.c
 SOURCE mame_layer.c
 SOURCE neoboot.c
 SOURCE event.c
+SOURCE keymap.c
 SOURCE stb_image.c
 SOURCE stb_zlib.c
 SOURCE Video_arm.s Memcpy.S
@@ -71,17 +68,21 @@ SOURCE Video_arm.s Memcpy.S
 
 MACRO USE_CYCLONE=1
 //MACRO USE_DRZ80=1
+//SOURCEPATH  ..\src\gngeo-0.8\src\drz80
+//SOURCE DrZ80.s
+//USERINCLUDE ..\src\gngeo-0.8\src\drz80
+//SOURCEPATH ..\src\gngeo-0.8\src
+//SOURCE drz80_interf.c
 
-USERINCLUDE ..\src\gngeo-0.8\src\drz80
+
 USERINCLUDE ..\src\gngeo-0.8\src\cyclone
-SOURCEPATH  ..\src\gngeo-0.8\src\drz80
-SOURCE DrZ80.s
 SOURCEPATH  ..\src\gngeo-0.8\src\cyclone
 SOURCE Cyclone.s
-
 SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE cyclone_interf.c
-//SOURCE drz80_interf.c
+SOURCE mamez80_interf.c
+MACRO USE_MAMEZ80=1
+
 #else
 SOURCEPATH ..\src\gngeo-0.8\src
 SOURCE generator68k_interf.c
@@ -89,8 +90,6 @@ SOURCE mamez80_interf.c
 MACRO USE_GENERATOR68K=1
 MACRO USE_MAMEZ80=1
 #endif
-
-ALWAYS_BUILD_AS_ARM
 
 
 SOURCEPATH ..\data

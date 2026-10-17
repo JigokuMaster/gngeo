@@ -19,14 +19,29 @@
 #ifndef _SOUND_H_
 #define _SOUND_H_
 
+
 #include "SDL.h"
 
 #define NB_SEGMENT 20
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef USE_SYMBIAN_AUDIOSTREAM
+void SymbianAudioStream_SetVolume(int aValue);
+void SymbianAudioStream_Update();
+#else
 extern SDL_AudioSpec * desired, *obtain;
+#endif
+
 int init_sdl_audio(void);
 void close_sdl_audio(void);
 void pause_audio(int on);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

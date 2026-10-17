@@ -1,6 +1,7 @@
 #ifndef GNEVENT_H
 #define GNEVENT_H
 
+#include <stdbool.h>
 #include "SDL.h"
 
 typedef enum {
@@ -15,6 +16,8 @@ typedef enum {
 	GN_RIGHT,
 	GN_START,
 	GN_SELECT_COIN,
+	GN_SAVESTATE,
+	GN_LOADSTATE,
 	GN_MENU_KEY,
 	GN_HOTKEY1,
 	GN_HOTKEY2,
@@ -35,14 +38,14 @@ struct BUT_MAPJAXIS {
 };
 
 typedef struct JOYMAP {
-	struct BUT_MAP key[SDLK_LAST];
 	struct BUT_MAP **jbutton;
 	struct BUT_MAPJAXIS **jaxe;
 	struct BUT_MAP **jhat;
 }JOYMAP;
 
-JOYMAP *jmap;
-Uint8 joy_state[2][GN_MAX_KEY];
+/* Joystick maps only; keyboard bindings live in keymap.c (see keymap.h) */
+extern JOYMAP *jmap;
+extern Uint8 joy_state[2][GN_MAX_KEY];
 
 
 bool init_event(void);

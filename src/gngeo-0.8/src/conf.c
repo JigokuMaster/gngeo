@@ -103,7 +103,7 @@ static char *default_p1control = "A=J0B9,B=J0B10,C=J0B11,D=J0B12,START=J0B18,COI
 static char *default_p2control = "....";
 #elif defined(SYMBIAN)
 static char * default_p1control = "UP=K273,DOWN=K274,LEFT=K276,RIGHT=K275,A=K50,"
-		"B=K56,C=K52,D=K54,COIN=K49,START=K53,START=K13";
+		"B=K56,C=K52,D=K54,COIN=K49,START=K53,START=K13,SAVESTATE=K115,LOADSTATE=K108";
 static char * default_p2control = "";
 #else
 	/* TODO: Make Querty default instead of azerty */
@@ -134,6 +134,12 @@ void cf_cache_conf(void) {
 	conf.pal = CF_BOOL(cf_get_item_by_name("pal"));
 
 	conf.autoframeskip = CF_BOOL(cf_get_item_by_name("autoframeskip"));
+	{
+		int fs = CF_VAL(cf_get_item_by_name("frameskip"));
+		if (fs < 0) fs = 0;
+		if (fs > MANUAL_FRAMESKIP_MAX) fs = MANUAL_FRAMESKIP_MAX;
+		conf.frameskip = (Uint8) fs;
+	}
 	conf.show_fps = CF_BOOL(cf_get_item_by_name("showfps"));
 	conf.sleep_idle = CF_BOOL(cf_get_item_by_name("sleepidle"));
 	conf.screen320 = CF_BOOL(cf_get_item_by_name("screen320"));
@@ -297,7 +303,11 @@ void cf_create_str_array_item(const char *name, const char *help, const char *hl
 
 CONF_ITEM* cf_get_item_by_name(const char *name) {
 	int i;
-	int a = tolower((int) name[0]);
+	int a;
+
+	if (!name || !name[0]) return NULL;
+	a = tolower((unsigned char) name[0]);
+	if (a < 0 || a >= 128) return NULL;   /* cf_hash has 128 buckets */
 
 	for (i = 0; i < cf_hash[a].nb_item; i++) {
 		if (strcasecmp(cf_hash[a].conf[i]->name, name) == 0)
@@ -425,6 +435,7 @@ void cf_init(void) {
 	cf_create_bool_item("fullscreen", "Start gngeo in fullscreen", 'f', false);
 	
 #endif
+	cf_create_int_item("frameskip", "Frames to skip after each displayed frame (0 = none, needs autoframeskip off)", "X", 0, 0);
 	cf_create_bool_item("pal", "Use PAL timing (buggy)", 'P', false);
 	cf_create_bool_item("screen320", "Use 320x224 output screen (instead 304x224)", 0, true);
 	cf_create_bool_item("bench", "Draw x frames, then quit and show average fps", 0, false);
@@ -559,7 +570,34 @@ void cf_cleanup()
 }
 
 /* TODO: lame, do it better */
+#include <errno.h>
+
+/* Split "name value..." into bounded buffers. The value is everything after
+ * the name (spaces inside are kept, e.g. paths), trailing blanks trimmed. */
+static void split_line(const char *buf, char *name, int nsize, char *val, int vsize) {
+	const char *p = buf;
+	int n = 0;
+
+	name[0] = 0;
+	val[0] = 0;
+	while (*p == ' ' || *p == '\t') p++;
+	while (*p && *p != ' ' && *p != '\t') {
+		if (n < nsize - 1) name[n++] = *p;
+		p++;
+	}
+	name[n] = 0;
+	while (*p == ' ' || *p == '\t') p++;
+	n = 0;
+	while (*p) {
+		if (n < vsize - 1) val[n++] = *p;
+		p++;
+	}
+	while (n > 0 && (val[n - 1] == ' ' || val[n - 1] == '\t')) n--;
+	val[n] = 0;
+}
+
 bool discard_line(char *buf) {
+	while (*buf == ' ' || *buf == '\t') buf++;
 	if (buf[0] == '#')
 		return true;
 	if (buf[0] == '\n')
@@ -574,16 +612,15 @@ bool discard_line(char *buf) {
 char *my_fgets(char *s, int size, FILE *stream) {
 	int i = 0;
 	int ch;
-	while (i < size && !feof(stream)) {
-		ch = fgetc(stream); //printf("ch=%d\n",ch);
+	if (size <= 0) return s;
+	while ((ch = fgetc(stream)) != EOF) {
 		if (ch == 0x0D) continue;
-		if (ch == 0x0A) {
-			s[i] = 0;
-			return s;
-		}
-		s[i] = ch;
-		i++;
+		if (ch == 0x0A) break;
+		if (i < size - 1)
+			s[i++] = (char) ch;
+		/* else: line too long, drop the rest of it */
 	}
+	s[i] = 0;
 	return s;
 }
 
@@ -630,6 +667,9 @@ bool cf_save_file(char *filename, int flags) {
 
 	if ((f_dst = fopen(conf_file_dst, "w")) == 0) {
 		fprintf(stderr, "Unable to open %s\n",conf_file);
+#ifndef USE_ALLOCA
+		free(conf_file_dst);
+#endif
 		return false;
 	}
 
@@ -640,14 +680,14 @@ bool cf_save_file(char *filename, int flags) {
 		while (!feof(f)) {
 			i = 0;
 			my_fgets(buf, 510, f);
+			if (buf[0] == 0 && feof(f))
+				break;   /* nothing after the last newline: don't add a blank line */
 			if (discard_line(buf)) {
 				fprintf(f_dst, "%s\n", buf);
 				continue;
 			}
 
-			//sscanf(buf, "%s %s", name, val);
-			sscanf(buf, "%s ", name);
-			strncpy(val, buf + strlen(name) + 1, 254);
+			split_line(buf, name, sizeof(name), val, sizeof(val));
 
 			cf = cf_get_item_by_name(name);
 			if (cf) {
@@ -681,6 +721,9 @@ bool cf_save_file(char *filename, int flags) {
 					}
 				} else
 					fprintf(f_dst, "%s\n", buf);
+			} else {
+				/* unknown option: keep the line instead of silently dropping it */
+				fprintf(f_dst, "%s\n", buf);
 			}
 		}
 
@@ -726,14 +769,17 @@ bool cf_save_file(char *filename, int flags) {
 
 	fclose(f_dst);
 	bool ret = true;
-	if(remove(conf_file)==-1)
+	/* ENOENT = first save, no old file to remove */
+	if (remove(conf_file) == -1 && errno != ENOENT)
 	{
 	    perror("failed to save config");
+	    remove(conf_file_dst);
 	    ret = false;
 	}
-	else
+	else if (rename(conf_file_dst, conf_file) != 0)
 	{
-	    rename(conf_file_dst, conf_file);
+	    perror("failed to rename config");
+	    ret = false;
 	}
 #ifndef USE_ALLOCA	
 	free(conf_file_dst);
@@ -809,8 +855,7 @@ bool cf_open_file(char *filename) {
 		if (discard_line(buf))
 			continue;
 	
-		/* TODO: Verify this on Win32 */
-		sscanf(buf, "%s %s", name, val);
+		split_line(buf, name, sizeof(name), val, sizeof(val));
 
 		//sscanf(buf, "%s ", name);
 		//strncpy(val,buf+strlen(name)+1,254);
@@ -828,6 +873,7 @@ bool cf_open_file(char *filename) {
 					break;
 				case CFT_STRING:
 					strncpy(CF_STR(cf), val, 254);
+					CF_STR(cf)[254] = 0;
 					break;
 				case CFT_ARRAY:
 					read_array(CF_ARRAY(cf), val, CF_ARRAY_SIZE(cf));
