@@ -1,85 +1,78 @@
 NeoGeo emulator for Symbian S60v3 and higher (devices with physical keyboard)
-port based on [GnGeo 0.8](https://github.com/linuxlinks/gngeo). 
+
+this port is based on [GnGeo 0.8](https://github.com/linuxlinks/gngeo). 
 
 # Installation
 
-* Download [gngeo_gcce.sisx](https://github.com/JigokuMaster/gngeo/releases) 
+see the [releases](https://github.com/JigokuMaster/gngeo/releases) page
 
-* You may need to install PIPS 1.7
+* gngeo.sisx: a little slower, it's using the portable CPU cores (gen68k, mamez80)
 
-* It's highly recommended to download games as .gno ROM, this format loads faster and use less RAM compared to zipped ROMs you can download most of the games from [here](https://github.com/steward-fu/website/releases/tag/neogeo)
+* gngeo-armv6.sisx: a little faster, it was built using GCCE 4.6.3
 
-* Put your games in the drive where gngeo was installed, if installed in C then put them in C:\\gngeo\\roms
-
-#  Notes:
-
-- GnGeo can not play all games (metalslug4, metalslug4 plus, metalslug3, metalslug5) are loadable but not playable.
-
-- If some control key is missing from the menu, download the default [gngeorc](https://github.com/JigokuMaster/gngeo/blob/main/src/gngeo-0.8/gngeorc.symbian) rename to gngeorc and copy to gngeo folder in E or C drive.
+* gngeo-cyclone.sisx: it's using the ARM assembly CPU core, more faster, but it cannot load states that have been saved with the previous versions of gngeo.
 
 
-- If some game is runnig very slow, try to enable autoframeskip from option menu.
+* you may need to install PIPS 1.7
 
-- The sound is disabled by default, you can enable it from samplerate option but games may run slow. 
+* it's highly recommended to download games as .gno ROM, this format loads faster and use less RAM compared to zipped ROMs you can download most of the games from [here](https://github.com/steward-fu/website/releases/tag/neogeo)
 
-- Big games needs more RAM, remember to download the game as .gno ROM and keep the sound disabled.
+* put your games in the drive where gngeo was installed, if installed in C then put them in C:\\gngeo\\roms
 
+#  Notes
+
+- gngeo can not play all games (metalslug4, metalslug4 plus, metalslug3, metalslug5) are loadable but not playable.
+
+- if some game is runnig slow enabling frameskip options should help.
+
+- big games need enough free RAM 30MB or more, in this case make sure to download the game as .gno ROM! and keep the sound disabled.
 
 # Controls 
+
+those are the default keymappings, but anyway you should configure to your preferred keys (see  Option > Controls)
 
 Neogeo       |    SYMBIAN
 __________________________
 
-Start            :     KEY 5 or ENTER 
+Start              :    KEY 5 or ENTER 
 
-Insert Coin :     KEY 1
-
-
-A                  :     KEY 2
+Insert Coin        :    KEY 1
 
 
-B                  :     KEY 8
+A                  :    KEY 2
 
 
-C                  :     KEY 4
+B                  :    KEY 8
+
+
+C                  :    KEY 4
 
 
 D                  :    KEY 6
 
 
-Joystick     :    ARROW KEYS
+Joystick           :    ARROW KEYS
 
 use */# Keys to control audio volume. 
 
 use the GREEN Key to take screenshot, it will be saved in gngeo\screenshots folder.
 
-![Main](https://github.com/JigokuMaster/gngeo/raw/main/screenshots/E5_main.jpg)
-
-![PuzzleBobble](https://github.com/JigokuMaster/gngeo/raw/main/screenshots/E5_pb.jpg)
-
-
 # Building
 
-gngeo was built on Linux (using gnupoc package and GCCE 3.4.3)
+gngeo was built on Linux (using the gnupoc-package and GCCE 3.4.3) but can be built on windows too using standard S60v3 SDK.
 
-clone/download [SDL1.2.13](https://github.com/JigokuMaster/symbian-sdl-libs) and build SDL.lib
+first clone/download [SDL1.2.14](https://github.com/JigokuMaster/symbian-sdl-libs) then build the ESDL.lib
 
-cd SDL1.2.1/symbian
+```bash
 
-bldmake bldfiles
+cd SDL1.2.14_ag/Symbian/s60v3
 
-abld build -v gcce urel
-
-clone/download gngeo repo 
-
-
-cd gngeo\group
-
-bldmake bldfiles
+bldmake bldfiles gcce urel
 
 abld build -v gcce urel
+```
 
-Linux
+clone/download gngeo repo
 
 ```bash
 
@@ -93,7 +86,3 @@ make mksis
 
 ```
 
-# TO-DO:
-- Add OpenGLES support.
-- Compile without PIPS (UIQ3.1 port).
-- Add ROMs downloader.

@@ -9,7 +9,7 @@ MACRO HAVE_CONFIG_H
 MACRO USE_SYMBIAN_AUDIOSTREAM
 
 // tested with GCCE 4.6.3
-//OPTION GCCE -march=armv6 -mtune=arm1136j-s 
+OPTION GCCE -march=armv6 -mtune=arm1136j-s 
 
 OPTION GCCE -O3 -ftracer -fomit-frame-pointer -mno-apcs-frame -Wno-unused
 ALWAYS_BUILD_AS_ARM
